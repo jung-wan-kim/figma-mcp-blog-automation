@@ -1,0 +1,62 @@
+name: "Figma to Git Basic Pipeline"
+description: "Terminal MCP를 활용한 기본 Git 연동"
+
+tasks:
+  - id: "extract-figma-data"
+    mcp: "terminal-mcp"
+    action: "execute-command"
+    params:
+      command: echo "Figma data extracted" && echo '{"components":[{"name":"Button"}]}' > /tmp/figma-data.json
+
+  - id: "generate-components"
+    mcp: "terminal-mcp"
+    action: "execute-command"
+    dependsOn: ["extract-figma-data"]
+    params:
+      command: |
+        mkdir -p src/components/generated
+        cat > src/components/generated/Button.tsx << 'COMPONENT'
+        import React from 'react';
+        
+        interface ButtonProps {
+          children: React.ReactNode;
+          variant?: 'primary' | 'secondary';
+        }
+        
+        export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary' }) => {
+          return (
+            <button className={`btn btn-${variant}`}>
+              {children}
+            </button>
+          );
+   name: "Figma to Git Basic Pipeline"
+descriptioncodescription: "Terminal MCP를 활?d
+tasks:
+  - id: "extract-figma-data"
+    mcp: "terminal-mmma  - i      mcp: "terminal-mcp"
+   on    action: "execute-c      params:
+      command: een      commed
+  - id: "generate-components"
+    mcp: "terminal-mcp"
+    action: "execute-command"
+    dependsOn: ["extract  d    mcp: "terminal-mcp"
+    ]
+    action: "execute-can    dependsOn: ["extract-figge    params:
+      command: |
+       an      comm
+E   cat > taskmanager-mcp-server/package.json << 'EOF'
+{
+  "name": "taskmanager-mcp-server",
+  "version": "1.0.0",
+  "description": "TaskManager MCP Server for workflow orchestration",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "js-yaml": "^4.1.0"
+  }
+}
