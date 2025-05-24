@@ -2,15 +2,15 @@ import React from 'react';
 
 interface ButtonProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'outline';
   size?: 'small' | 'medium' | 'large';
   onClick?: () => void;
 }
 
 /**
- * Auto-generated Button component from Figma
- * Generated at: $(date)
- * TaskManager MCP Pipeline
+ * Enhanced Button component - Phase 2 Update
+ * Generated from Figma with GitHub MCP integration
+ * New features: outline variant, enhanced accessibility
  */
 export const Button: React.FC<ButtonProps> = ({ 
   children, 
@@ -18,20 +18,27 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'medium',
   onClick 
 }) => {
-  const baseClasses = 'px-4 py-2 rounded font-medium transition-colors focus:outline-none focus:ring-2';
-  const variantClasses = variant === 'primary' 
-    ? 'bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-300'
-    : 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-300';
+  const baseClasses = 'inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  
+  const variantClasses = {
+    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
+    outline: 'border-2 border-blue-600 text-blue-600 bg-transparent hover:bg-blue-600 hover:text-white focus:ring-blue-500'
+  }[variant];
+  
   const sizeClasses = {
-    small: 'text-sm px-3 py-1',
-    medium: 'text-base px-4 py-2', 
-    large: 'text-lg px-6 py-3'
+    small: 'px-3 py-1.5 text-sm',
+    medium: 'px-4 py-2 text-base',
+    large: 'px-6 py-3 text-lg'
   }[size];
   
   return (
     <button 
       className={`${baseClasses} ${variantClasses} ${sizeClasses}`}
       onClick={onClick}
+      type="button"
+      role="button"
+      aria-label={typeof children === 'string' ? children : undefined}
     >
       {children}
     </button>
