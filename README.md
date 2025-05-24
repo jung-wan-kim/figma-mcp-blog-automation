@@ -5,6 +5,15 @@
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Deployment](https://img.shields.io/badge/deployment-live-success)
+
+## 🌐 Live Demo
+
+**🚀 [배포된 데모 보기](https://figma-mcp-nextjs-supabase.vercel.app/)**
+
+> 실제 동작하는 자동화 시스템을 확인해보세요! Figma 컴포넌트들이 Next.js로 완벽하게 변환되어 배포된 모습을 볼 수 있습니다.
+
+---
 
 ## 🚀 프로젝트 개요
 
@@ -117,7 +126,6 @@ vibe/
 ├── ⚙️ next.config.js              # Next.js 설정
 ├── 📝 tsconfig.json               # TypeScript 설정
 ├── 🎨 tailwind.config.js          # Tailwind CSS 설정
-├── 🚀 vercel.json                 # Vercel 배포 설정
 ├── 📄 pages/                      # Next.js 페이지
 │   ├── index.tsx                  # 메인 대시보드
 │   ├── _app.tsx                   # 앱 래퍼
@@ -141,28 +149,31 @@ vibe/
 
 ## 🚀 빠른 시작
 
-### 1. 의존성 설치
+### 1. 저장소 클론
+```bash
+git clone https://github.com/jung-wan-kim/figma-mcp-nextjs-supabase.git
+cd figma-mcp-nextjs-supabase
+```
+
+### 2. 의존성 설치
 ```bash
 npm install
 ```
 
-### 2. 개발 서버 실행
+### 3. 개발 서버 실행
 ```bash
 npm run dev
 # http://localhost:3000 에서 확인
 ```
 
-### 3. 프로덕션 빌드
+### 4. 프로덕션 빌드
 ```bash
 npm run build
 npm run start
 ```
 
-### 4. Vercel 배포
-```bash
-# GitHub 저장소 연결 후 자동 배포
-vercel --prod
-```
+### 5. 배포 확인
+**🌐 Live Demo**: https://figma-mcp-nextjs-supabase.vercel.app/
 
 ## 🛠️ 기술 스택
 
@@ -182,6 +193,13 @@ vercel --prod
 - 🔄 **자동화 시간**: 디자인 변경 → 배포 완료 3분 이내
 - 📈 **가용성**: 99.9% (Vercel + Supabase)
 
+## 🌐 배포 정보
+
+- **🚀 Production URL**: https://figma-mcp-nextjs-supabase.vercel.app/
+- **📦 Hosting**: Vercel (자동 배포)
+- **🔄 CI/CD**: GitHub Actions → Vercel
+- **📊 성능 모니터링**: Vercel Analytics
+
 ## 🤝 기여하기
 
 1. Fork the Project
@@ -200,4 +218,5 @@ MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
 ---
 
-**🎯 목표**: Figma에서 프로덕션까지, 완전 자동화된 디자인 시스템 구축
+**🎯 목표**: Figma에서 프로덕션까지, 완전 자동화된 디자인 시스템 구축  
+**🚀 현재 상태**: 프로덕션 배포 완료 및 운영 중!
