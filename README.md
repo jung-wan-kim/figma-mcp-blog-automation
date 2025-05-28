@@ -163,8 +163,18 @@ npm run orchestrate YOUR_FIGMA_FILE_KEY
 ```
 
 **📖 자세한 가이드**: 
+- [🚀 프로젝트 초기화 가이드](./INITIALIZATION_GUIDE.md) - **NEW!**
 - [⚡ 5분 빠른 시작](./QUICK_START.md)
 - [📋 상세 사용 가이드](./USAGE_GUIDE.md)
+- [🔧 문제 해결 가이드](./TROUBLESHOOTING.md)
+
+### 🎯 초기화 명령어 (NEW!)
+```bash
+npm run init               # 대화형 초기화 선택
+npm run init:figma         # Figma 연동으로 시작
+npm run init:markdown      # Markdown 파일 기반으로 시작  
+npm run init:template      # 템플릿에서 시작
+```
 
 ### 사용 가능한 명령어
 ```bash
