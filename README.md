@@ -149,30 +149,33 @@ vibe/
 
 ## 🚀 빠른 시작
 
-### 1. 저장소 클론
+### ⚡ 5분 빠른 시작
 ```bash
 git clone https://github.com/jung-wan-kim/figma-mcp-nextjs-supabase.git
 cd figma-mcp-nextjs-supabase
+npm run setup
 ```
 
-### 2. 의존성 설치
+API 키 설정 후:
 ```bash
-npm install
+npm run test:integration
+npm run orchestrate YOUR_FIGMA_FILE_KEY
 ```
 
-### 3. 개발 서버 실행
+**📖 자세한 가이드**: 
+- [⚡ 5분 빠른 시작](./QUICK_START.md)
+- [📋 상세 사용 가이드](./USAGE_GUIDE.md)
+
+### 사용 가능한 명령어
 ```bash
-npm run dev
-# http://localhost:3000 에서 확인
+npm run setup              # 자동 설정
+npm run test:integration   # 통합 테스트
+npm run orchestrate        # 완전 자동화 실행
+npm run dashboard:server   # 실시간 대시보드
+npm run dev               # 개발 서버
 ```
 
-### 4. 프로덕션 빌드
-```bash
-npm run build
-npm run start
-```
-
-### 5. 배포 확인
+### 배포 확인
 **🌐 Live Demo**: https://figma-mcp-nextjs-supabase.vercel.app/
 
 ## 🛠️ 기술 스택
