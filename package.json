@@ -3,12 +3,22 @@
   "version": "1.0.0",
   "description": "Figma MCP + Next.js + Supabase 통합 자동화 시스템",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "setup": "./setup.sh",
+    "test:integration": "node automation/integration-test.js",
+    "orchestrate": "node automation/enhanced-orchestrator.js",
+    "dashboard:server": "cd dashboard-mcp-server && npm start",
+    "mcp:taskmanager": "cd taskmanager-mcp-server && npm start",
+    "mcp:figma": "cd figma-mcp-server && npm start",
+    "mcp:github": "cd github-mcp-server && npm start",
+    "mcp:supabase": "cd supabase-mcp-server && npm start",
+    "mcp:dashboard": "cd dashboard-mcp-server && npm start"
   },
   "dependencies": {
     "next": "^14.0.0",

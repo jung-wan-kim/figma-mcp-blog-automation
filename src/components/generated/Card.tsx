@@ -9,8 +9,7 @@ interface CardProps {
 
 /**
  * Card component - Phase 3 Complete Automation
- * Auto-generated from Figma with full pipeline integration
- * Features: Multiple variants, flexible padding, accessibility
+ * Auto-generated with advanced features
  */
 export const Card: React.FC<CardProps> = ({ 
   children, 
@@ -18,11 +17,11 @@ export const Card: React.FC<CardProps> = ({
   padding = 'medium',
   className = ''
 }) => {
-  const baseClasses = 'rounded-lg transition-all duration-200 focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-2';
+  const baseClasses = 'rounded-lg transition-all duration-200';
   
   const variantClasses = {
-    default: 'bg-white border border-gray-200 hover:border-gray-300',
-    elevated: 'bg-white shadow-md hover:shadow-lg',
+    default: 'bg-white border border-gray-200',
+    elevated: 'bg-white shadow-lg hover:shadow-xl',
     outlined: 'bg-transparent border-2 border-gray-300 hover:border-gray-400'
   }[variant];
   
@@ -34,11 +33,7 @@ export const Card: React.FC<CardProps> = ({
   }[padding];
   
   return (
-    <div 
-      className={`${baseClasses} ${variantClasses} ${paddingClasses} ${className}`}
-      role="article"
-      tabIndex={0}
-    >
+    <div className={`${baseClasses} ${variantClasses} ${paddingClasses} ${className}`}>
       {children}
     </div>
   );

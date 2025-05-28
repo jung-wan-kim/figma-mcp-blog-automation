@@ -1,185 +1,343 @@
+#!/usr/bin/env node
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { ListToolsRequestSchema, CallToolRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import yaml from 'js-yaml';
 import fs from 'fs/promises';
-import { spawn } from 'child_process';
+import path from 'path';
 
-const server = new Server({
-  name: "taskmanager-mcp-server",
-  version: "1.0.0",
-}, {
-  capabilities: {
-    tools: {}
+class TaskManagerMCPServer {
+  constructor() {
+    this.server = new Server(
+      {
+        name: 'taskmanager-mcp-server',
+        version: '1.0.0',
+      },
+      {
+        capabilities: {
+          tools: {},
+        },
+      }
+    );
+
+    this.workflowStates = new Map();
+    this.setupHandlers();
   }
-});
 
-// 워크플로우 실행 도구
-server.setRequestHandler("tools/execute-workflow", async (request) => {
-  const { workflowPath, input = {} } = request.params;
-  
-  try {
-    console.log(`🎯 Executing workflow: ${workflowPath}`);
-    
-    // 워크플로우 파일 읽기
-    const workflowContent = await fs.readFile(workflowPath, 'utf8');
-    const workflow = yaml.load(workflowContent);
-    
-    console.log(`📋 Workflow loaded: ${workflow.name}`);
-    
-    // 작업 실행 컨텍스트
-    const context = {
-      input,
-      results: {},
-      timestamp: new Date().toISOString()
+  setupHandlers() {
+    // 워크플로우 실행 핸들러
+    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
+      tools: [
+        {
+          name: 'execute-workflow',
+          description: '워크플로우 파일을 실행합니다',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              workflowPath: {
+                type: 'string',
+                description: '워크플로우 YAML 파일 경로',
+              },
+              input: {
+                type: 'object',
+                description: '워크플로우 입력 파라미터',
+              },
+            },
+            required: ['workflowPath'],
+          },
+        },
+        {
+          name: 'get-workflow-status',
+          description: '워크플로우 실행 상태를 조회합니다',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              workflowId: {
+                type: 'string',
+                description: '워크플로우 ID',
+              },
+            },
+            required: ['workflowId'],
+          },
+        },
+        {
+          name: 'list-workflows',
+          description: '사용 가능한 워크플로우 목록을 조회합니다',
+          inputSchema: {
+            type: 'object',
+            properties: {},
+          },
+        },
+      ],
+    }));
+
+    // 워크플로우 실행
+    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      switch (name) {
+        case 'execute-workflow':
+          return await this.executeWorkflow(args);
+        case 'get-workflow-status':
+          return await this.getWorkflowStatus(args);
+        case 'list-workflows':
+          return await this.listWorkflows();
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+    });
+  }
+
+  async executeWorkflow({ workflowPath, input = {} }) {
+    try {
+      console.log(`🎯 Executing workflow: ${workflowPath}`);
+
+      // 워크플로우 파일 읽기
+      const workflowContent = await fs.readFile(workflowPath, 'utf8');
+      const workflow = yaml.load(workflowContent);
+
+      console.log(`📋 Workflow loaded: ${workflow.name}`);
+
+      // 작업 실행 컨텍스트
+      const context = {
+        workflowId: Date.now().toString(),
+        input,
+        results: {},
+        timestamp: new Date().toISOString(),
+      };
+
+      // 워크플로우 상태 저장
+      this.workflowStates.set(context.workflowId, {
+        status: 'running',
+        workflow: workflow.name,
+        startTime: context.timestamp,
+        steps: [],
+      });
+
+      // 단계별 실행
+      for (const step of workflow.steps) {
+        console.log(`⚡ Executing step: ${step.name}`);
+
+        try {
+          // MCP 서버 호출 시뮬레이션
+          const result = await this.executeMCPAction(step, context);
+
+          context.results[step.id] = result;
+
+          this.workflowStates.get(context.workflowId).steps.push({
+            name: step.name,
+            status: 'completed',
+            result: result,
+          });
+
+          console.log(`✅ Step completed: ${step.name}`);
+        } catch (stepError) {
+          console.error(`❌ Step failed: ${step.name}`, stepError);
+
+          this.workflowStates.get(context.workflowId).steps.push({
+            name: step.name,
+            status: 'failed',
+            error: stepError.message,
+          });
+
+          if (!step.continueOnError) {
+            throw stepError;
+          }
+        }
+      }
+
+      // 워크플로우 완료
+      const state = this.workflowStates.get(context.workflowId);
+      state.status = 'completed';
+      state.endTime = new Date().toISOString();
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow '${workflow.name}' completed successfully with ${workflow.steps.length} steps`,
+          },
+        ],
+      };
+    } catch (error) {
+      console.error('Workflow execution failed:', error);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow execution failed: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+
+  async getWorkflowStatus({ workflowId }) {
+    const state = this.workflowStates.get(workflowId);
+
+    if (!state) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Workflow ${workflowId} not found`,
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              workflowId,
+              ...state,
+            },
+            null,
+            2
+          ),
+        },
+      ],
     };
-  import { Server } from '@modelcontextprotocol/??mport { StdioServerTransport } from '@modelcontextprotocol/sdk/sef import yaml from 'js-yaml';
-import fs from 'fs/promises';
-import { spawn } from   import fs from 'fs/promiseltimport { spawn } from 'childon
-const server = new Server({
-  name: d]   name: "taskmanager-mcp-slo  version: "1.0.0",
-}, {
-  capab`)}, {
-  capabilitierr  c {    tools: {}
-  .e  }
-});
+  }
 
-// sk}){t
-/k.iserver.setRequestHandler("tools    const { workflowPath, input = {} } = request.params;
-  
-  try {
-        
-  try {
-    console.log(`🎯 Executing workflow: je t.    coon    
-    // 워크플로우 파일 읽기
-    const workflotc   er    const workflowContent = await ffa    const workflow = yaml.load(workflowContent);
-    
-    console.l;
-    
-    console.log(`📋 Workflow loaded: ${wun   on    
-    // 작업 실행 컨텍스트
-    const context l-   ')    const context = {
-      inpu?     input,
-      r??      resul?     timestamp: ur    };
-  import { Server } from '@modelcms  impanimport fs from 'fs/promises';
-import { spawn } from   import fs from 'fs/promiseltimport { spawn } from 'childon
-const server = new Server({
-  netimport { spawn } from   impojeconst server = new Server({
-  name: d]   name: "taskmanager-mcp-slo  version: "1.cw  name: d]   name: "taskma '}, {
-  capab`)}, {
-  capabilitierr  c {    tools: {}
-  .est  cr   capabiliti    .e  }
-});
+  async listWorkflows() {
+    const workflowDir = path.join(process.cwd(), 'workflows');
 
-// sk}){t
-/k.iserve) });
+    try {
+      const files = await fs.readdir(workflowDir);
+      const workflows = [];
 
-/  
-/ st/k.iservda  
-  try {
-        
-  try {
-    console.log(`🎯 Executing workflow: je t.    coon    
-  .t St      ;
-  try {
-     co      // 워크플로우 파일 읽기
-    const workflotc        const workflotc   er    const wue    
-    console.l;
-    
-    console.log(`📋 Workflow loaded: ${wun   on    
-    // 작업 실행 컨텍?o   Co    
-    conswi   co    // 작업 실행 컨텍스트
-    const context ro    const context l-   ')    con        inpu?     input,
-      r??      resul??      r??      resul?()  import { Server } from '@modelcms  impanimpot(import { spawn } from   import fs from 'fs/promiseltimport { spawn } fMCconst server = new Server({
-  netimport { spawn } from   imecho "# Figma MCP Test Project - Phase 1" > README.md && echo "" >> README.md && echo "Terminal MCP를 활용한 기본 Git 자동화 테스트" >> README.md
-echo "Testing Phase 1 workflow steps manually..."
-# Step 1: Mock Figma data extraction
-echo "📥 Step 1: Extracting Figma data..."
-echo '{"components": [{"name": "Button", "props": ["variant", "size"]}], "tokens": {"colors": {"primary": "#3b82f6"}}}' > /tmp/figma-data.json
-echo "✅ Figma data created at /tmp/figma-data.json"
-# Step 2: Generate React components
-echo "⚡ Step 2: Generating React components..."
-mkdir -p src/components/generated
+      for (const file of files) {
+        if (file.endsWith('.yaml') || file.endsWith('.yml')) {
+          const content = await fs.readFile(
+            path.join(workflowDir, file),
+            'utf8'
+          );
+          const workflow = yaml.load(content);
 
-cat > src/components/generated/Button.tsx << 'EOF'
-import React from 'react';
+          workflows.push({
+            file,
+            name: workflow.name,
+            description: workflow.description,
+            steps: workflow.steps.length,
+          });
+        }
+      }
 
-interface ButtonProps {
-  children: React.ReactNode;
-  variant?: 'primary' | 'secondary';
-  size?: 'small' | 'medium' | 'large';
-  onClick?: () => void;
-}
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(workflows, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: `Failed to list workflows: ${error.message}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
 
-/**
- * Auto-generated Button component from Figma
- * Generated at: $(date)
- * TaskManager MCP Pipeline
- */
-export const Button: React.FC<ButtonProps> = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'medium',
-  onClick 
-}) => {
-  const baseClasses = 'px-4 py-2 rounded font-medium transition-colors focus:outline-none focus:ring-2';
-  const variantClasses = variant === 'primary' 
-    ? 'bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-300'
-    : 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-300';
-  const sizeClasses = {
-    small: 'text-sm px-3 py-1',
-    medium: 'text-base px-4 py-2', 
-    large: 'text-lg px-6 py-3'
-  }[size];
-  
-  retecho "⚡ Step 2: Generating React={mkdir -p src/components/generated
+  async executeMCPAction(step, context) {
+    const { mcp, action, params = {} } = step;
 
-cat > src/com`}
-cat > src/components/generated/   import React from 'react';
+    // 실제 구현에서는 각 MCP 서버와 통신
+    // 현재는 시뮬레이션
 
-interface ButtonPropsor
-interface ButtonProps {
-on'  children: React.Reacne  variant?: 'primary' | 'seac  size?: 'small' | 'medi# Step 3: Add changes to Git
-echo "📝 Step 3: Adding changes to Git..."
-git add .
-git status
-# Step 4: Commit changes
-echo "💾 Step 4: Committing changes..."
-git commit -m "🎨 Auto-generated components from Figma
+    switch (mcp) {
+      case 'figma-mcp':
+        return this.simulateFigmaMCP(action, params);
 
-Generated Components:
-- Button.tsx (with variant and size props)  
-- index.ts (component exports)
+      case 'github-mcp':
+        return this.simulateGitHubMCP(action, params);
 
-Design Tokens Applied:
-- Primary color: #3b82f6
-- Hover states and transitions
-- Focus states for accessibility
+      case 'nextjs-mcp':
+        return this.simulateNextJSMCP(action, params);
 
-Infrastructure:
-- TaskManager MCP Server setup
-- Basic workflow definition
-- Terminal MCP integration
+      default:
+        throw new Error(`Unknown MCP server: ${mcp}`);
+    }
+  }
 
-Generated by: TaskManager MCP Pipeline
-Phase: 1 (Basic Git Integration)
+  simulateFigmaMCP(action, params) {
+    switch (action) {
+      case 'detect-changes':
+        return {
+          changes: ['Button component updated', 'Color tokens changed'],
+          timestamp: new Date().toISOString(),
+        };
 
-[auto-commit]"
-echo "🎉 Phase 1 Completed Successfully && echo "" && git log --oneline && echo "" && echo "📁 Project Structure:" && find . -type f -name "*.tsx" -o -name "*.ts" -o -name "*.yaml" -o -name "*.js" | head -10
-mkdir -p github-mcp-server && cd github-mcp-server
-cat > package.json << 'EOF'
-{
-  "name": "github-mcp-server",
-  "version": "1.0.0",
-  "description": "GitHub integration MCP Server",
-  "main": "server.js",
-  "type": "module",
-  "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "@octokit/rest": "^20.0.0",
-    "dotenv": "^16.3.0"
+      case 'extract-components':
+        return {
+          components: [
+            { name: 'Button', type: 'component' },
+            { name: 'Card', type: 'component' },
+          ],
+        };
+
+      default:
+        return { simulated: true, action, params };
+    }
+  }
+
+  simulateGitHubMCP(action, params) {
+    switch (action) {
+      case 'create-branch':
+        return {
+          branch: params.branchName || 'feature/auto-update',
+          created: true,
+        };
+
+      case 'create-pr':
+        return {
+          pr: {
+            number: 123,
+            title: params.title || 'Auto-generated updates',
+            url: 'https://github.com/example/repo/pull/123',
+          },
+        };
+
+      default:
+        return { simulated: true, action, params };
+    }
+  }
+
+  simulateNextJSMCP(action, params) {
+    switch (action) {
+      case 'generate-components':
+        return {
+          generated: ['Button.tsx', 'Card.tsx'],
+          path: 'src/components/generated',
+        };
+
+      case 'update-styles':
+        return {
+          updated: ['globals.css', 'tailwind.config.js'],
+        };
+
+      default:
+        return { simulated: true, action, params };
+    }
+  }
+
+  async run() {
+    const transport = new StdioServerTransport();
+    await this.server.connect(transport);
+    console.error('TaskManager MCP Server started');
   }
 }
+
+const server = new TaskManagerMCPServer();
+server.run().catch(console.error);

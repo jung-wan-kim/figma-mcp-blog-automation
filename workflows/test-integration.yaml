@@ -1,0 +1,29 @@
+name: test-integration-workflow
+description: MCP 서버 통합 테스트 워크플로우
+
+steps:
+  - id: detect-changes
+    name: Figma 변경사항 감지
+    mcp: figma-mcp
+    action: detect-changes
+    params: {}
+  - id: extract-components
+    name: 컴포넌트 추출
+    mcp: figma-mcp
+    action: extract-components
+    params: {}
+  - id: create-branch
+    name: GitHub 브랜치 생성
+    mcp: github-mcp
+    action: create-branch
+    params: {"branchName":"test/mcp-integration"}
+  - id: save-state
+    name: 워크플로우 상태 저장
+    mcp: supabase-mcp
+    action: save-workflow-state
+    params: {"status":"completed"}
+  - id: update-metrics
+    name: 대시보드 메트릭 업데이트
+    mcp: dashboard-mcp
+    action: update-workflow-metrics
+    params: {"status":"completed"}

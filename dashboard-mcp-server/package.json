@@ -1,0 +1,24 @@
+{
+  "name": "dashboard-mcp-server",
+  "version": "1.0.0",
+  "description": "Dashboard MCP Server for real-time monitoring and visualization",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "ws": "^8.16.0",
+    "dotenv": "^16.3.0"
+  },
+  "keywords": [
+    "dashboard",
+    "mcp",
+    "monitoring",
+    "real-time"
+  ],
+  "author": "",
+  "license": "MIT"
+}
