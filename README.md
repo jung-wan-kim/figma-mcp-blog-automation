@@ -11,13 +11,16 @@
 
 **🚀 [배포된 데모 보기](https://figma-mcp-nextjs-supabase.vercel.app/)**
 
-> 실제 동작하는 자동화 시스템을 확인해보세요! Figma 컴포넌트들이 Next.js로 완벽하게 변환되어 배포된 모습을 볼 수 있습니다.
+> 실제 동작하는 자동화 시스템을 확인해보세요! Figma 컴포넌트들이 Next.js로
+> 완벽하게 변환되어 배포된 모습을 볼 수 있습니다.
 
 ---
 
 ## 🚀 프로젝트 개요
 
-Figma 디자인 변경부터 프로덕션 배포까지의 전체 워크플로우를 완전 자동화하는 통합 시스템입니다. MCP(Model Context Protocol) 기반의 다중 서버 아키텍처로 설계되어 높은 확장성과 안정성을 제공합니다.
+Figma 디자인 변경부터 프로덕션 배포까지의 전체 워크플로우를 완전 자동화하는 통합
+시스템입니다. MCP(Model Context Protocol) 기반의 다중 서버 아키텍처로 설계되어
+높은 확장성과 안정성을 제공합니다.
 
 ## 🏗️ 시스템 아키텍처
 
@@ -34,13 +37,15 @@ graph TD
 
 #### 🔧 핵심 MCP 구성요소
 
-| MCP 서버 | 역할 | 주요 기능 |
-|---------|------|----------|
-| **🎨 Figma MCP** | 디자인 추출 & 분석 | 컴포넌트 변경 감지, 디자인 토큰 추출 |
-| **🎯 TaskManager MCP** | 워크플로우 오케스트레이션 | 작업 큐 관리, 의존성 해결, 병렬/순차 실행 |
-| **💾 Supabase MCP** | 데이터 저장 & 동기화 | 메타데이터 관리, 실시간 상태 추적 |
-| **⚡ Next.js MCP** | 컴포넌트 생성 | React 컴포넌트 자동 생성, TypeScript 타입 |
-| **📈 Dashboard MCP** | UI 업데이트 & 모니터링 | 실시간 진행상황, 성능 메트릭 |
+| MCP 서버                | 역할                      | 주요 기능                                 |
+| ----------------------- | ------------------------- | ----------------------------------------- |
+| **🎨 Figma MCP**        | 디자인 추출 & 분석        | 컴포넌트 변경 감지, 디자인 토큰 추출      |
+| **🎯 TaskManager MCP**  | 워크플로우 오케스트레이션 | 작업 큐 관리, 의존성 해결, 병렬/순차 실행 |
+| **💾 Supabase MCP**     | 데이터 저장 & 동기화      | 메타데이터 관리, 실시간 상태 추적         |
+| **🐙 GitHub MCP**       | 코드 저장소 관리          | 브랜치 생성, PR 자동화, 커밋 관리         |
+| **📈 Dashboard MCP**    | UI 업데이트 & 모니터링    | 실시간 진행상황, 성능 메트릭              |
+| **🧠 Context7 MCP**     | 컨텍스트 관리             | 작업 히스토리, 지식 베이스                |
+| **🌐 BrowserTools MCP** | 웹 자동화                 | 브라우저 제어, 스크린샷, 테스트 자동화    |
 
 #### 🔄 TaskManager MCP 핵심 기능
 
@@ -66,12 +71,15 @@ graph LR
 #### 📋 GitHub MCP 워크플로우
 
 1. **🔍 변경 감지**
+
    - Figma 디자인 변경을 TaskManager가 감지
 
 2. **⚡ 코드 생성**
+
    - Next.js 컴포넌트 및 스타일 자동 생성
 
 3. **🔧 Git 작업**
+
    - 브랜치 생성, 커밋, Pull Request 자동 생성
 
 4. **🚀 자동 배포**
@@ -90,30 +98,43 @@ graph LR
 ## 🌟 핵심 특징
 
 ### ✨ 성능 최적화
+
 작업 의존성을 분석하여 최대한 병렬 처리로 전체 처리 시간을 단축합니다.
 
 ### 🛡️ 안정성 보장
+
 작업별 재시도 로직과 롤백 메커니즘으로 시스템 안정성을 보장합니다.
 
 ### 📈 확장성
+
 새로운 MCP 서버를 쉽게 추가하고 워크플로우를 동적으로 확장할 수 있습니다.
 
 ### 👁️ 가시성
+
 모든 작업의 상태와 진행 상황을 실시간으로 모니터링할 수 있습니다.
 
 ## 🔄 자동화 시나리오
 
 ### 1. **Figma 디자인 변경 감지**
+
 - 컴포넌트 속성 변경 감지
 - `feature/design-update-{timestamp}` 브랜치 생성
 - 상세한 타임라인 파악 및 기록
 
 ### 2. **Pull Request 생성** (리뷰용 자동 업로드)
+
 - CI/CD 파이프라인 실행
 - 스테이징 환경 자동 배포
 - 팀 슬랙에 알림 전송
 
-### 3. **팀과 공유 및 검토**
+### 3. **브라우저 자동화 테스트**
+
+- 브라우저 자동화로 UI 컴포넌트 테스트
+- 스크린샷 비교를 통한 시각적 회귀 테스트
+- 성능 메트릭 자동 수집
+
+### 4. **팀과 공유 및 검토**
+
 - Pull Request 리뷰 프로세스
 - 자동화된 테스트 실행
 - 승인 후 메인 브랜치 병합
@@ -150,6 +171,7 @@ vibe/
 ## 🚀 빠른 시작
 
 ### ⚡ 5분 빠른 시작
+
 ```bash
 git clone https://github.com/jung-wan-kim/figma-mcp-nextjs-supabase.git
 cd figma-mcp-nextjs-supabase
@@ -157,26 +179,30 @@ npm run setup
 ```
 
 API 키 설정 후:
+
 ```bash
 npm run test:integration
 npm run orchestrate YOUR_FIGMA_FILE_KEY
 ```
 
-**📖 자세한 가이드**: 
+**📖 자세한 가이드**:
+
 - [🚀 프로젝트 초기화 가이드](./INITIALIZATION_GUIDE.md) - **NEW!**
 - [⚡ 5분 빠른 시작](./QUICK_START.md)
 - [📋 상세 사용 가이드](./USAGE_GUIDE.md)
 - [🔧 문제 해결 가이드](./TROUBLESHOOTING.md)
 
 ### 🎯 초기화 명령어 (NEW!)
+
 ```bash
 npm run init               # 대화형 초기화 선택
 npm run init:figma         # Figma 연동으로 시작
-npm run init:markdown      # Markdown 파일 기반으로 시작  
+npm run init:markdown      # Markdown 파일 기반으로 시작
 npm run init:template      # 템플릿에서 시작
 ```
 
 ### 사용 가능한 명령어
+
 ```bash
 npm run setup              # 자동 설정
 npm run test:integration   # 통합 테스트
@@ -186,18 +212,19 @@ npm run dev               # 개발 서버
 ```
 
 ### 배포 확인
+
 **🌐 Live Demo**: https://figma-mcp-nextjs-supabase.vercel.app/
 
 ## 🛠️ 기술 스택
 
-| 카테고리 | 기술 |
-|---------|------|
+| 카테고리     | 기술                             |
+| ------------ | -------------------------------- |
 | **Frontend** | Next.js 14, React 18, TypeScript |
-| **Styling** | Tailwind CSS, PostCSS |
-| **Backend** | Node.js, MCP Protocol |
-| **Database** | Supabase (PostgreSQL) |
-| **DevOps** | GitHub Actions, Vercel |
-| **Design** | Figma API, Design Tokens |
+| **Styling**  | Tailwind CSS, PostCSS            |
+| **Backend**  | Node.js, MCP Protocol            |
+| **Database** | Supabase (PostgreSQL)            |
+| **DevOps**   | GitHub Actions, Vercel           |
+| **Design**   | Figma API, Design Tokens         |
 
 ## 📊 성능 메트릭
 

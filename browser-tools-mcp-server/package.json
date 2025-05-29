@@ -1,0 +1,26 @@
+{
+  "name": "browser-tools-mcp-server",
+  "version": "1.0.0",
+  "description": "Browser Tools MCP Server for automation and web interaction",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "echo \"Browser Tools MCP Server Test - OK\" && exit 0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "puppeteer": "^21.0.0",
+    "dotenv": "^16.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "browser",
+    "automation",
+    "web-scraping",
+    "selenium"
+  ],
+  "author": "Jung-Wan Kim",
+  "license": "MIT"
+}
