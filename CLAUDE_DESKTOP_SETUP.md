@@ -92,15 +92,14 @@ Claude Desktop의 설정 파일 위치:
       }
     },
     "browser-tools-mcp": {
-      "command": "npx",
+      "command": "node",
       "args": [
-        "-y",
-        "@smithery/cli@latest",
-        "run",
-        "@diulela/browser-tools-mcp",
-        "--key",
-        "3e7735c8-b9d5-45ec-a2da-4d5ca70dfc17"
-      ]
+        "/Users/jung-wankim/Project/Claude/figma-mcp-nextjs-supabase/browser-tools-mcp-server/server.js"
+      ],
+      "env": {
+        "BROWSER_HEADLESS": "true",
+        "SCREENSHOT_PATH": "./screenshots"
+      }
     },
     "playwright": {
       "command": "npx",
