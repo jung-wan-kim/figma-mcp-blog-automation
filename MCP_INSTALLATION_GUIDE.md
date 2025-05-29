@@ -3,14 +3,24 @@
 이 가이드는 Claude Code에서 연결 성공한 MCP 서버들의 설치 및 설정 방법을
 정리합니다.
 
-## 연결 성공한 MCP 서버 목록
+## 현재 연결된 MCP 서버 목록 (2025-05-29 확인)
 
 - ✅ context7
-- ✅ Framelink Figma MCP
-- ✅ TalkToFigma
+- ✅ framelink-figma
+- ✅ sequential-thinking
+- ✅ talktofigma
+- ✅ taskmanager
 - ✅ terminal
-- ✅ browser-tools
-- ✅ server-sequential-thinking
+
+## MCP 상태 확인 명령어
+
+```bash
+# MCP 서버 연결 상태 확인
+mcp
+
+# MCP 디버그 모드 실행
+claude --mcp-debug
+```
 
 ## 1. Context7 MCP 서버
 
@@ -78,23 +88,7 @@ npx iterm_mcp_server
 - 출력 읽기
 - 터미널 세션 관리
 
-## 5. Browser Tools MCP 서버
-
-### 설치
-
-```bash
-npx -y @browserbasehq/mcp-browser-tools
-```
-
-### 기능
-
-- 브라우저 자동화
-- 웹 페이지 스크린샷
-- 웹 요소 클릭, 타이핑
-- 페이지 네비게이션
-- 콘솔 로그 확인
-
-## 6. Server Sequential Thinking MCP 서버
+## 5. Sequential Thinking MCP 서버
 
 ### 설치
 
@@ -108,6 +102,27 @@ npx -y @modelcontextprotocol/server-sequential-thinking
 - 복잡한 문제 해결을 위한 순차적 분석
 - 가설 생성 및 검증
 - 추론 과정 저장 및 관리
+
+## 6. TaskManager MCP 서버
+
+### 설치
+
+```bash
+cd taskmanager-mcp-server
+npm install
+```
+
+### 실행
+
+```bash
+node server.js
+```
+
+### 기능
+
+- 워크플로우 실행 및 관리
+- 워크플로우 상태 조회
+- 작업 자동화 파이프라인
 
 ## 설정 확인
 

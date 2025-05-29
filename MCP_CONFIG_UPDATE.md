@@ -14,14 +14,14 @@
 - npx로 @modelcontextprotocol/server-sequential-thinking 실행
 - 기능: 단계별 사고 과정 처리, 복잡한 문제 해결
 
-## 현재 활성 MCP 서버
+## 현재 활성 MCP 서버 (2025-05-29)
 
-1. **terminal** - 터미널 명령어 실행
-2. **Framelink Figma MCP** - Figma 파일 정보 조회
-3. **TalkToFigma** - Figma 요소 생성/수정
-4. **context7** - 컨텍스트 관리 (로컬 서버)
-5. **browser-tools** - 브라우저 자동화
-6. **server-sequential-thinking** - 순차적 사고 처리
+1. **context7** - 컨텍스트 관리 (로컬 서버)
+2. **framelink-figma** - Figma 파일 정보 조회
+3. **sequential-thinking** - 순차적 사고 처리
+4. **talktofigma** - Figma 요소 생성/수정
+5. **taskmanager** - 워크플로우 실행 및 관리
+6. **terminal** - 터미널 명령어 실행
 
 ## 설정 파일 위치
 
