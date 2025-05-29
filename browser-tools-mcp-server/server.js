@@ -41,6 +41,7 @@ class BrowserToolsMCPServer {
         headless: process.env.BROWSER_HEADLESS === 'true' ? 'new' : false,
         defaultViewport: { width: 1280, height: 720 },
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
       });
       this.page = await this.browser.newPage();
 
