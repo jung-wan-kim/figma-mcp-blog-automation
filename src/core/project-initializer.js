@@ -9,7 +9,7 @@
  * 3. 템플릿에서 시작
  */
 
-import inquirer from 'inquirer';
+import readline from 'readline';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -26,34 +26,61 @@ class ProjectInitializer {
       markdown: new MarkdownInitializer(),
       template: new TemplateInitializer()
     };
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  async question(query) {
+    return new Promise((resolve) => {
+      this.rl.question(query, resolve);
+    });
+  }
+
+  async select(message, choices) {
+    console.log(message);
+    choices.forEach((choice, index) => {
+      console.log(`${index + 1}. ${choice.name || choice}`);
+    });
+    
+    while (true) {
+      const answer = await this.question('\n선택하세요 (번호 입력): ');
+      const index = parseInt(answer) - 1;
+      
+      if (index >= 0 && index < choices.length) {
+        return choices[index].value || choices[index];
+      }
+      console.log('올바른 번호를 입력해주세요.');
+    }
+  }
+
+  async confirm(message, defaultValue = true) {
+    const answer = await this.question(`${message} (${defaultValue ? 'Y/n' : 'y/N'}): `);
+    if (answer.toLowerCase() === '') return defaultValue;
+    return answer.toLowerCase().startsWith('y');
+  }
+
+  closeInterface() {
+    this.rl.close();
   }
 
   async start() {
     console.log('🎯 Vibe 프로젝트 초기화');
     console.log('===================\n');
 
-    const { initMethod } = await inquirer.prompt([
+    const initMethod = await this.select('프로젝트를 어떻게 시작하시겠습니까?', [
       {
-        type: 'list',
-        name: 'initMethod',
-        message: '프로젝트를 어떻게 시작하시겠습니까?',
-        choices: [
-          {
-            name: '🎨 Figma 파일에서 시작 (디자인 시스템 자동 추출)',
-            value: 'figma',
-            short: 'Figma'
-          },
-          {
-            name: '📝 Markdown 파일에서 시작 (문서 기반 컴포넌트 정의)',
-            value: 'markdown',
-            short: 'Markdown'
-          },
-          {
-            name: '📋 템플릿에서 시작 (미리 정의된 컴포넌트 세트)',
-            value: 'template',
-            short: 'Template'
-          }
-        ]
+        name: '🎨 Figma 파일에서 시작 (디자인 시스템 자동 추출)',
+        value: 'figma'
+      },
+      {
+        name: '📝 Markdown 파일에서 시작 (문서 기반 컴포넌트 정의)',
+        value: 'markdown'
+      },
+      {
+        name: '📋 템플릿에서 시작 (미리 정의된 컴포넌트 세트)',
+        value: 'template'
       }
     ]);
 
@@ -75,6 +102,8 @@ class ProjectInitializer {
     } catch (error) {
       console.error('\n❌ 초기화 실패:', error.message);
       process.exit(1);
+    } finally {
+      this.closeInterface();
     }
   }
 
@@ -247,29 +276,48 @@ export default ${name};`;
 
 // Figma 초기화 클래스
 class FigmaInitializer {
+  constructor() {
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  async question(query) {
+    return new Promise((resolve) => {
+      this.rl.question(query, resolve);
+    });
+  }
+
+  async confirm(message, defaultValue = true) {
+    const answer = await this.question(`${message} (${defaultValue ? 'Y/n' : 'y/N'}): `);
+    if (answer.toLowerCase() === '') return defaultValue;
+    return answer.toLowerCase().startsWith('y');
+  }
+
   async initialize() {
     console.log('🎨 Figma 연동 초기화 시작\n');
 
-    const answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'figmaFileKey',
-        message: 'Figma 파일 키를 입력하세요:',
-        validate: (input) => input.length > 0 || 'Figma 파일 키는 필수입니다'
-      },
-      {
-        type: 'input',
-        name: 'figmaToken',
-        message: 'Figma Personal Access Token을 입력하세요:',
-        validate: (input) => input.length > 0 || 'Figma 토큰은 필수입니다'
-      },
-      {
-        type: 'confirm',
-        name: 'autoSync',
-        message: '자동 동기화를 활성화하시겠습니까?',
-        default: true
+    let figmaFileKey;
+    while (!figmaFileKey) {
+      figmaFileKey = await this.question('Figma 파일 키를 입력하세요: ');
+      if (!figmaFileKey) {
+        console.log('Figma 파일 키는 필수입니다.');
       }
-    ]);
+    }
+
+    let figmaToken;
+    while (!figmaToken) {
+      figmaToken = await this.question('Figma Personal Access Token을 입력하세요: ');
+      if (!figmaToken) {
+        console.log('Figma 토큰은 필수입니다.');
+      }
+    }
+
+    const autoSync = await this.confirm('자동 동기화를 활성화하시겠습니까?', true);
+
+    const answers = { figmaFileKey, figmaToken, autoSync };
+    this.rl.close();
 
     console.log('\n🔍 Figma 파일 분석 중...');
     
@@ -384,35 +432,60 @@ steps:
 
 // Markdown 초기화 클래스
 class MarkdownInitializer {
+  constructor() {
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  async question(query) {
+    return new Promise((resolve) => {
+      this.rl.question(query, resolve);
+    });
+  }
+
+  async select(message, choices) {
+    console.log(message);
+    choices.forEach((choice, index) => {
+      console.log(`${index + 1}. ${choice.name || choice}`);
+    });
+    
+    while (true) {
+      const answer = await this.question('\n선택하세요 (번호 입력): ');
+      const index = parseInt(answer) - 1;
+      
+      if (index >= 0 && index < choices.length) {
+        return choices[index].value || choices[index];
+      }
+      console.log('올바른 번호를 입력해주세요.');
+    }
+  }
+
   async initialize() {
     console.log('📝 Markdown 기반 초기화 시작\n');
 
-    const answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'markdownPath',
-        message: 'Markdown 파일 경로를 입력하세요:',
-        default: './docs/components.md',
-        validate: async (input) => {
-          try {
-            await fs.access(input);
-            return true;
-          } catch {
-            return 'Markdown 파일을 찾을 수 없습니다';
-          }
-        }
-      },
-      {
-        type: 'list',
-        name: 'format',
-        message: 'Markdown 파일 형식을 선택하세요:',
-        choices: [
-          { name: '표준 컴포넌트 명세 (권장)', value: 'standard' },
-          { name: 'Storybook 스타일', value: 'storybook' },
-          { name: 'JSON-like 형식', value: 'json' }
-        ]
+    let markdownPath;
+    while (!markdownPath) {
+      const input = await this.question('Markdown 파일 경로를 입력하세요 (기본값: ./docs/components.md): ');
+      markdownPath = input || './docs/components.md';
+      
+      try {
+        await fs.access(markdownPath);
+      } catch {
+        console.log('Markdown 파일을 찾을 수 없습니다. 다시 입력해주세요.');
+        markdownPath = null;
       }
+    }
+
+    const format = await this.select('Markdown 파일 형식을 선택하세요:', [
+      { name: '표준 컴포넌트 명세 (권장)', value: 'standard' },
+      { name: 'Storybook 스타일', value: 'storybook' },
+      { name: 'JSON-like 형식', value: 'json' }
     ]);
+
+    const answers = { markdownPath, format };
+    this.rl.close();
 
     console.log('\n📖 Markdown 파일 분석 중...');
     
@@ -548,33 +621,69 @@ steps:
 
 // 템플릿 초기화 클래스
 class TemplateInitializer {
+  constructor() {
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+  }
+
+  async question(query) {
+    return new Promise((resolve) => {
+      this.rl.question(query, resolve);
+    });
+  }
+
+  async select(message, choices) {
+    console.log(message);
+    choices.forEach((choice, index) => {
+      console.log(`${index + 1}. ${choice.name || choice}`);
+    });
+    
+    while (true) {
+      const answer = await this.question('\n선택하세요 (번호 입력): ');
+      const index = parseInt(answer) - 1;
+      
+      if (index >= 0 && index < choices.length) {
+        return choices[index].value || choices[index];
+      }
+      console.log('올바른 번호를 입력해주세요.');
+    }
+  }
+
+  async multiSelect(message, choices) {
+    console.log(message);
+    console.log('(쉼표로 구분하여 여러 개 선택 가능, 예: 1,3,4)');
+    choices.forEach((choice, index) => {
+      console.log(`${index + 1}. ${choice.name || choice}`);
+    });
+    
+    const answer = await this.question('\n선택하세요: ');
+    const indices = answer.split(',').map(s => parseInt(s.trim()) - 1).filter(i => i >= 0 && i < choices.length);
+    return indices.map(i => choices[i].value || choices[i]);
+  }
+
   async initialize() {
     console.log('📋 템플릿 기반 초기화 시작\n');
 
     const templates = await this.getAvailableTemplates();
     
-    const answers = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'template',
-        message: '사용할 템플릿을 선택하세요:',
-        choices: templates.map(t => ({
-          name: `${t.name} - ${t.description}`,
-          value: t.id
-        }))
-      },
-      {
-        type: 'checkbox',
-        name: 'features',
-        message: '추가할 기능을 선택하세요:',
-        choices: [
-          { name: '다크 모드 지원', value: 'darkMode' },
-          { name: '애니메이션 효과', value: 'animations' },
-          { name: '접근성 기능', value: 'accessibility' },
-          { name: '테스트 코드', value: 'tests' }
-        ]
-      }
+    const template = await this.select('사용할 템플릿을 선택하세요:', 
+      templates.map(t => ({
+        name: `${t.name} - ${t.description}`,
+        value: t.id
+      }))
+    );
+
+    const features = await this.multiSelect('추가할 기능을 선택하세요:', [
+      { name: '다크 모드 지원', value: 'darkMode' },
+      { name: '애니메이션 효과', value: 'animations' },
+      { name: '접근성 기능', value: 'accessibility' },
+      { name: '테스트 코드', value: 'tests' }
     ]);
+
+    const answers = { template, features };
+    this.rl.close();
 
     console.log('\n🏗️ 템플릿 적용 중...');
     
