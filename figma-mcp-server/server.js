@@ -6,8 +6,11 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
+import { getMCPLogger } from '../src/lib/mcp-logger.js';
 
 dotenv.config();
+
+const logger = getMCPLogger('figma-mcp-server');
 
 class FigmaMCPServer {
   constructor() {
@@ -26,7 +29,12 @@ class FigmaMCPServer {
     this.figmaToken = process.env.FIGMA_TOKEN || '';
     this.figmaFileKey = process.env.FIGMA_FILE_KEY || '';
     this.baseURL = 'https://api.figma.com/v1';
-    
+
+    logger.info('Figma MCP Server initialized', {
+      hasToken: !!this.figmaToken,
+      hasFileKey: !!this.figmaFileKey,
+    });
+
     this.setupHandlers();
   }
 
@@ -101,18 +109,36 @@ class FigmaMCPServer {
     // 도구 호출 핸들러
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      const startTime = Date.now();
 
-      switch (name) {
-        case 'detect-design-changes':
-          return await this.detectDesignChanges(args);
-        case 'extract-components':
-          return await this.extractComponents(args);
-        case 'extract-design-tokens':
-          return await this.extractDesignTokens(args);
-        case 'generate-component-json':
-          return await this.generateComponentJSON(args);
-        default:
-          throw new Error(`Unknown tool: ${name}`);
+      logger.logToolCall(name, args);
+
+      try {
+        let result;
+        switch (name) {
+          case 'detect-design-changes':
+            result = await this.detectDesignChanges(args);
+            break;
+          case 'extract-components':
+            result = await this.extractComponents(args);
+            break;
+          case 'extract-design-tokens':
+            result = await this.extractDesignTokens(args);
+            break;
+          case 'generate-component-json':
+            result = await this.generateComponentJSON(args);
+            break;
+          default:
+            throw new Error(`Unknown tool: ${name}`);
+        }
+
+        const _duration = Date.now() - startTime;
+        logger.logToolSuccess(name, result, _duration);
+        return result;
+      } catch (error) {
+        const _duration = Date.now() - startTime;
+        logger.logToolError(name, error, args);
+        throw error;
       }
     });
   }
@@ -120,31 +146,33 @@ class FigmaMCPServer {
   async detectDesignChanges({ fileKey, lastChecked }) {
     try {
       const key = fileKey || this.figmaFileKey;
-      
+
       if (!key) {
         return this.errorResponse('Figma 파일 키가 필요합니다');
       }
 
       if (!this.figmaToken) {
-        return this.errorResponse('Figma API 토큰이 설정되지 않았습니다. FIGMA_TOKEN 환경변수를 설정하세요.');
+        return this.errorResponse(
+          'Figma API 토큰이 설정되지 않았습니다. FIGMA_TOKEN 환경변수를 설정하세요.'
+        );
       }
 
       // Figma API로 파일 정보 가져오기
-      const response = await axios.get(
-        `${this.baseURL}/files/${key}`,
-        {
-          headers: {
-            'X-Figma-Token': this.figmaToken,
-          },
-        }
-      );
+      const apiStart = Date.now();
+      const response = await axios.get(`${this.baseURL}/files/${key}`, {
+        headers: {
+          'X-Figma-Token': this.figmaToken,
+        },
+      });
+
+      logger.logAPICall(`/files/${key}`, 'GET', response.status, Date.now() - apiStart);
 
       const fileData = response.data;
       const currentModified = fileData.lastModified;
-      
+
       // 변경사항 분석
       const hasChanges = lastChecked ? new Date(currentModified) > new Date(lastChecked) : true;
-      
+
       // 컴포넌트 목록 가져오기
       const components = [];
       if (fileData.components) {
@@ -185,7 +213,7 @@ class FigmaMCPServer {
   async extractComponents({ fileKey }) {
     try {
       const key = fileKey || this.figmaFileKey;
-      
+
       if (!key) {
         return this.errorResponse('Figma 파일 키가 필요합니다');
       }
@@ -195,14 +223,11 @@ class FigmaMCPServer {
       }
 
       // Figma API로 파일 정보 가져오기
-      const response = await axios.get(
-        `${this.baseURL}/files/${key}`,
-        {
-          headers: {
-            'X-Figma-Token': this.figmaToken,
-          },
-        }
-      );
+      const response = await axios.get(`${this.baseURL}/files/${key}`, {
+        headers: {
+          'X-Figma-Token': this.figmaToken,
+        },
+      });
 
       const fileData = response.data;
       const components = [];
@@ -211,14 +236,11 @@ class FigmaMCPServer {
       if (fileData.components) {
         for (const [id, component] of Object.entries(fileData.components)) {
           // 컴포넌트 노드 정보 가져오기
-          const nodeResponse = await axios.get(
-            `${this.baseURL}/files/${key}/nodes?ids=${id}`,
-            {
-              headers: {
-                'X-Figma-Token': this.figmaToken,
-              },
-            }
-          );
+          const nodeResponse = await axios.get(`${this.baseURL}/files/${key}/nodes?ids=${id}`, {
+            headers: {
+              'X-Figma-Token': this.figmaToken,
+            },
+          });
 
           const nodeData = nodeResponse.data.nodes[id];
           const document = nodeData.document;
@@ -256,7 +278,7 @@ class FigmaMCPServer {
   async extractDesignTokens({ fileKey }) {
     try {
       const key = fileKey || this.figmaFileKey;
-      
+
       if (!key) {
         return this.errorResponse('Figma 파일 키가 필요합니다');
       }
@@ -266,14 +288,11 @@ class FigmaMCPServer {
       }
 
       // Figma API로 스타일 정보 가져오기
-      const response = await axios.get(
-        `${this.baseURL}/files/${key}`,
-        {
-          headers: {
-            'X-Figma-Token': this.figmaToken,
-          },
-        }
-      );
+      const response = await axios.get(`${this.baseURL}/files/${key}`, {
+        headers: {
+          'X-Figma-Token': this.figmaToken,
+        },
+      });
 
       const fileData = response.data;
       const tokens = {
@@ -284,7 +303,7 @@ class FigmaMCPServer {
 
       // 스타일 정보 추출
       if (fileData.styles) {
-        for (const [styleId, style] of Object.entries(fileData.styles)) {
+        for (const [_styleId, style] of Object.entries(fileData.styles)) {
           if (style.styleType === 'FILL') {
             // 색상 스타일 추출
             const nodeResponse = await axios.get(
@@ -295,11 +314,12 @@ class FigmaMCPServer {
                 },
               }
             );
-            
+
             const nodeData = nodeResponse.data.nodes[style.node_id];
             if (nodeData?.document?.fills?.[0]?.color) {
               const color = nodeData.document.fills[0].color;
-              tokens.colors[style.name] = `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
+              tokens.colors[style.name] =
+                `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a})`;
             }
           } else if (style.styleType === 'TEXT') {
             // 텍스트 스타일 추출
@@ -333,7 +353,7 @@ class FigmaMCPServer {
   async generateComponentJSON({ componentId, fileKey }) {
     try {
       const key = fileKey || this.figmaFileKey;
-      
+
       if (!key) {
         return this.errorResponse('Figma 파일 키가 필요합니다');
       }
@@ -379,7 +399,8 @@ class FigmaMCPServer {
             variants: {
               primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
               secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800 focus:ring-gray-500',
-              outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white focus:ring-blue-500',
+              outline:
+                'border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white focus:ring-blue-500',
             },
             sizes: {
               small: 'px-3 py-1.5 text-sm',
@@ -424,9 +445,25 @@ class FigmaMCPServer {
   async run() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
+    logger.logServerStart(process.env.PORT || 'stdio');
     console.error('Figma MCP Server started successfully');
+
+    // 종료 시그널 처리
+    process.on('SIGINT', () => {
+      logger.logServerStop('SIGINT');
+      process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
+      logger.logServerStop('SIGTERM');
+      process.exit(0);
+    });
   }
 }
 
 const server = new FigmaMCPServer();
-server.run().catch(console.error);
+server.run().catch((error) => {
+  logger.error('서버 실행 중 오류 발생', error);
+  console.error(error);
+  process.exit(1);
+});
