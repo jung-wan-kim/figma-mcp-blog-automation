@@ -43,6 +43,7 @@
     "autoprefixer": "^10.4.0",
     "chalk": "^5.4.1",
     "clsx": "^2.1.1",
+    "figma-mcp": "^0.1.4",
     "inquirer": "^9.3.7",
     "next": "^14.0.0",
     "postcss": "^8.4.0",
