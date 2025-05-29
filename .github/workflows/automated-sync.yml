@@ -1,0 +1,116 @@
+name: Automated Figma to GitHub Sync
+
+on:
+  schedule:
+    - cron: '0 */2 * * *'  # 2시간마다 실행
+  workflow_dispatch:
+    inputs:
+      figma_file_key:
+        description: 'Figma file key to sync'
+        required: false
+        type: string
+
+jobs:
+  sync-figma-changes:
+    name: Sync Figma Design Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          for dir in figma-mcp-server github-mcp-server taskmanager-mcp-server supabase-mcp-server; do
+            if [ -d "$dir" ]; then
+              cd "$dir"
+              npm ci
+              cd ..
+            fi
+          done
+      
+      - name: Start MCP servers
+        run: |
+          # TaskManager 서버 시작
+          cd taskmanager-mcp-server
+          npm start &
+          cd ..
+          
+          # Figma 서버 시작
+          cd figma-mcp-server
+          npm start &
+          cd ..
+          
+          # GitHub 서버 시작
+          cd github-mcp-server
+          npm start &
+          cd ..
+          
+          # Supabase 서버 시작
+          cd supabase-mcp-server
+          npm start &
+          cd ..
+          
+          # 서버 시작 대기
+          sleep 15
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      
+      - name: Run Figma sync workflow
+        run: |
+          node automation/master-orchestrator.js sync-figma \
+            --workflow=figma-to-github-pr \
+            --figma-file-key="${{ github.event.inputs.figma_file_key || env.DEFAULT_FIGMA_FILE_KEY }}"
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          DEFAULT_FIGMA_FILE_KEY: ${{ vars.DEFAULT_FIGMA_FILE_KEY }}
+      
+      - name: Check for generated PR
+        id: check-pr
+        run: |
+          # PR이 생성되었는지 확인
+          PR_NUMBER=$(gh pr list --head "figma-sync-" --json number -q '.[0].number')
+          if [ -n "$PR_NUMBER" ]; then
+            echo "pr_created=true" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "pr_created=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Auto-merge PR (if tests pass)
+        if: steps.check-pr.outputs.pr_created == 'true'
+        run: |
+          # PR 체크가 통과하면 자동 머지
+          gh pr merge ${{ steps.check-pr.outputs.pr_number }} \
+            --auto \
+            --merge \
+            --delete-branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify completion
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Figma sync workflow completed
+            PR Created: ${{ steps.check-pr.outputs.pr_created }}
+            PR Number: ${{ steps.check-pr.outputs.pr_number || 'N/A' }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

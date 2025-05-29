@@ -1,0 +1,71 @@
+name: MCP Servers Health Check
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6시간마다 실행
+  workflow_dispatch:  # 수동 실행 가능
+
+jobs:
+  health-check:
+    name: Check MCP Servers Health
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server:
+          - name: figma-mcp-server
+            port: 3001
+          - name: github-mcp-server
+            port: 3002
+          - name: taskmanager-mcp-server
+            port: 3003
+          - name: supabase-mcp-server
+            port: 3004
+          - name: dashboard-mcp-server
+            port: 3005
+          - name: context7-mcp-server
+            port: 3006
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies for ${{ matrix.server.name }}
+        working-directory: ./${{ matrix.server.name }}
+        run: npm ci
+      
+      - name: Start MCP server
+        working-directory: ./${{ matrix.server.name }}
+        run: |
+          npm start &
+          SERVER_PID=$!
+          sleep 10  # 서버 시작 대기
+          
+          # 헬스체크
+          if curl -f http://localhost:${{ matrix.server.port }}/health; then
+            echo "✅ ${{ matrix.server.name }} is healthy"
+            kill $SERVER_PID
+            exit 0
+          else
+            echo "❌ ${{ matrix.server.name }} health check failed"
+            kill $SERVER_PID
+            exit 1
+          fi
+        continue-on-error: true
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: 'MCP Server ${{ matrix.server.name }} health check failed!'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

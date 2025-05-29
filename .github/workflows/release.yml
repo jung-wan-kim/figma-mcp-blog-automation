@@ -1,0 +1,131 @@
+name: Release Management
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+          else
+            # npm version을 사용하여 버전 증가
+            VERSION=$(npm version ${{ github.event.inputs.release_type }} --no-git-tag-version)
+            VERSION=${VERSION#v}
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 이전 태그 찾기
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          # 변경사항 생성
+          if [ -z "$PREVIOUS_TAG" ]; then
+            CHANGES=$(git log --pretty=format:"- %s" HEAD)
+          else
+            CHANGES=$(git log --pretty=format:"- %s" ${PREVIOUS_TAG}..HEAD)
+          fi
+          
+          # 변경사항을 파일로 저장
+          echo "## What's Changed" > changelog.md
+          echo "" >> changelog.md
+          echo "$CHANGES" >> changelog.md
+          
+          # GitHub 출력 설정
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          cat changelog.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Build all components
+        run: |
+          # Next.js 빌드
+          npm run build
+          
+          # 각 MCP 서버 패키징
+          for server in figma-mcp-server github-mcp-server taskmanager-mcp-server supabase-mcp-server dashboard-mcp-server context7-mcp-server; do
+            if [ -d "$server" ]; then
+              cd "$server"
+              npm ci --production
+              cd ..
+              tar -czf "${server}-${{ steps.version.outputs.version }}.tar.gz" "$server"
+            fi
+          done
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body: ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          files: |
+            *-mcp-server-*.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-release:
+    name: Deploy Release
+    runs-on: ubuntu-latest
+    needs: create-release
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Deploy to production
+        run: |
+          echo "Deploying version ${{ needs.create-release.outputs.version }} to production"
+          # 실제 배포 명령어 추가
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      
+      - name: Update Docker images
+        run: |
+          # Docker 이미지 빌드 및 푸시 (필요한 경우)
+          echo "Building Docker images for version ${{ needs.create-release.outputs.version }}"
+        continue-on-error: true
+      
+      - name: Notify release
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Released version ${{ needs.create-release.outputs.version }}
+            View release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.create-release.outputs.version }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        continue-on-error: true

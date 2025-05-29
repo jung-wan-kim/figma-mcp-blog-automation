@@ -1,0 +1,88 @@
+version: 2
+updates:
+  # 루트 프로젝트 의존성 업데이트
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    assignees:
+      - "jung-wankim"
+    labels:
+      - "dependencies"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    
+  # MCP 서버들 의존성 업데이트
+  - package-ecosystem: "npm"
+    directory: "/figma-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "figma"
+    
+  - package-ecosystem: "npm"
+    directory: "/github-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "github"
+    
+  - package-ecosystem: "npm"
+    directory: "/taskmanager-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "taskmanager"
+    
+  - package-ecosystem: "npm"
+    directory: "/supabase-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "supabase"
+    
+  - package-ecosystem: "npm"
+    directory: "/dashboard-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "dashboard"
+    
+  - package-ecosystem: "npm"
+    directory: "/context7-mcp-server"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "mcp-server"
+      - "context7"
+    
+  # GitHub Actions 의존성 업데이트
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "github-actions"

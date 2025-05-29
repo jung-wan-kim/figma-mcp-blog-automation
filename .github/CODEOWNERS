@@ -1,0 +1,28 @@
+# 이 파일은 코드 소유자를 정의합니다
+# 각 패턴에 매칭되는 파일들의 PR은 해당 소유자의 리뷰가 필요합니다
+
+# 전체 프로젝트 기본 소유자
+* @jung-wankim
+
+# MCP 서버별 소유자
+/figma-mcp-server/ @jung-wankim
+/github-mcp-server/ @jung-wankim
+/taskmanager-mcp-server/ @jung-wankim
+/supabase-mcp-server/ @jung-wankim
+/dashboard-mcp-server/ @jung-wankim
+/context7-mcp-server/ @jung-wankim
+
+# 자동화 스크립트
+/automation/ @jung-wankim
+/workflows/ @jung-wankim
+
+# CI/CD 설정
+/.github/ @jung-wankim
+
+# 프론트엔드 컴포넌트
+/src/components/ @jung-wankim
+/pages/ @jung-wankim
+
+# 문서
+*.md @jung-wankim
+/docs/ @jung-wankim
