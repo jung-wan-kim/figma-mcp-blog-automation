@@ -132,6 +132,11 @@ Claude Desktop의 설정 파일 위치:
 2. Project Settings → API에서 URL과 anon key 복사
 3. `SUPABASE_URL`, `SUPABASE_ANON_KEY` 설정
 
+### Browser Tools 서비스
+
+- `BROWSER_HEADLESS`: 브라우저 헤드리스 모드 설정 (기본값: true)
+- `SCREENSHOT_PATH`: 스크린샷 저장 경로 (기본값: ./screenshots)
+
 ## 🚀 설정 적용 방법
 
 1. **설정 파일 편집**:
@@ -178,6 +183,12 @@ Claude Desktop을 재시작한 후, 채팅에서 다음과 같이 확인할 수 
 1. **토큰 유효성**: API 토큰들이 유효하고 올바른 권한을 가지는지 확인
 2. **Figma 파일 키**: Figma URL에서 파일 키를 정확히 추출했는지 확인
 3. **GitHub 저장소**: GITHUB_OWNER와 GITHUB_REPO가 실제 저장소와 일치하는지 확인
+
+### Browser Tools 오류 시
+
+1. **브라우저 초기화 실패**: Puppeteer 의존성이 올바르게 설치되었는지 확인
+2. **스크린샷 권한**: SCREENSHOT_PATH 디렉토리 쓰기 권한 확인
+3. **헤드리스 모드**: GUI 환경이 없는 서버에서는 BROWSER_HEADLESS=true 설정 필요
 
 ## 🎉 사용 예시
 
