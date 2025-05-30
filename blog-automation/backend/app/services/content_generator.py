@@ -8,6 +8,7 @@ import structlog
 
 from app.core.config import settings
 from app.services.seo_optimizer import SEOOptimizer
+from app.services.image_service import ImageService
 
 logger = structlog.get_logger()
 
@@ -21,13 +22,14 @@ class ContentGeneratorService:
         
         self.claude_client = Anthropic(api_key=settings.claude_api_key)
         self.seo_optimizer = SEOOptimizer()
+        self.image_service = ImageService()
     
     async def generate_content(
         self,
         keywords: List[str],
         content_type: str,
         style_preset: Optional[str] = None,
-        target_length: int = 1500,
+        target_length: int = 3000,
         tone: Optional[str] = None,
         ai_model: str = "claude"
     ) -> Dict:
@@ -58,7 +60,12 @@ class ContentGeneratorService:
             # 5. 메타 설명 생성
             meta_description = await self.generate_meta_description(title, content)
             
-            # 6. SEO 최적화
+            # 6. 이미지 제안
+            image_suggestions = await self.image_service.suggest_images_for_content(
+                title, keywords, content
+            )
+            
+            # 7. SEO 최적화
             optimized_content = await self.seo_optimizer.optimize_content(
                 content, keywords
             )
@@ -67,6 +74,8 @@ class ContentGeneratorService:
                 "title": title,
                 "content": optimized_content["optimized_content"],
                 "meta_description": meta_description,
+                "featured_image": image_suggestions["featured_image"],
+                "suggested_images": image_suggestions["suggested_images"],
                 "seo_score": optimized_content["seo_score"],
                 "readability_score": optimized_content["readability_score"],
                 "word_count": len(optimized_content["optimized_content"].split()),

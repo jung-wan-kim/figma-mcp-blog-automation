@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey, Integer
+from sqlalchemy import Column, String, Text, DateTime, Enum, ForeignKey, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -27,6 +27,18 @@ class Publication(Base):
     published_at = Column(DateTime(timezone=True))
     error_message = Column(Text)
     retry_count = Column(Integer, default=0)
+    
+    # 이미지 정보
+    featured_image_url = Column(String(1000))
+    featured_image_alt = Column(String(200))
+    suggested_images = Column(JSON)  # 제안된 이미지들
+    
+    # 성과 정보
+    views = Column(Integer, default=0)
+    likes = Column(Integer, default=0)
+    comments = Column(Integer, default=0)
+    last_stats_update = Column(DateTime(timezone=True))
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
