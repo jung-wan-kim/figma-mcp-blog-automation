@@ -9,17 +9,26 @@ export interface BlogPlatform {
 }
 
 export interface BlogPost {
-  id: number;
+  id: string; // UUID from backend
   title: string;
   content: string;
-  platform: {
+  platform?: {
+    name: string;
+    platform_type: string;
+    url: string;
+    username?: string;
+  };
+  // Supabase join result
+  blog_platforms?: {
+    id: string;
     name: string;
     platform_type: string;
     url: string;
     username?: string;
   };
   published_url: string;
-  published_at: string;
+  published_at?: string;
+  created_at?: string;
   status: string;
   views: number;
   likes: number;

@@ -67,7 +67,8 @@ export default function RecentPosts({ posts }: RecentPostsProps) {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium text-gray-900 truncate">{post.title}</h4>
                     <p className="mt-1 text-sm text-gray-500">
-                      {post.platform.name} • {formatDate(post.published_at)}
+                      {post.blog_platforms?.name || post.platform?.name || '알 수 없는 플랫폼'} •{' '}
+                      {formatDate(post.published_at || post.created_at)}
                     </p>
                     <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
                       <span>👀 {post.views.toLocaleString()}</span>

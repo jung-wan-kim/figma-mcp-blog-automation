@@ -302,9 +302,9 @@ async def get_dashboard_stats():
             print(f"플랫폼 조회 오류 (테이블이 없을 수 있음): {e}")
             platforms = []
         
-        # Supabase에서 최근 게시물 조회
+        # Supabase에서 최근 게시물 조회 (플랫폼 정보와 함께)
         try:
-            posts_response = supabase.table("blog_posts").select("*").order("created_at", desc=True).limit(5).execute()
+            posts_response = supabase.table("blog_posts").select("*, blog_platforms(*)").order("created_at", desc=True).limit(5).execute()
             recent_posts = posts_response.data if posts_response.data else []
         except Exception as e:
             print(f"게시물 조회 오류 (테이블이 없을 수 있음): {e}")
