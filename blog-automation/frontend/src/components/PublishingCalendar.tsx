@@ -81,7 +81,15 @@ export default function PublishingCalendar() {
       const date = new Date(activity.date);
       const month = date.getMonth();
 
-      if (month !== currentMonth) {
+      // 월이 바뀌고, 해당 주의 첫 번째 날이 그 월의 첫 주인 경우만 추가
+      if (month !== currentMonth && weekIndex > 0) {
+        currentMonth = month;
+        months.push({
+          label: date.toLocaleDateString('en-US', { month: 'short' }),
+          week: weekIndex,
+        });
+      } else if (weekIndex === 0) {
+        // 첫 번째 주는 항상 추가
         currentMonth = month;
         months.push({
           label: date.toLocaleDateString('en-US', { month: 'short' }),
