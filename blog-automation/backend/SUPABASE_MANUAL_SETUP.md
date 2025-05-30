@@ -1,13 +1,11 @@
 # Supabase 테이블 수동 생성 가이드
 
 ## 1. Supabase SQL Editor 열기
-
 링크: https://supabase.com/dashboard/project/eupjjwgxrzxmddnumxyd/sql/new
 
 ## 2. 다음 SQL을 실행
 
 ### 테이블 생성
-
 ```sql
 CREATE TABLE IF NOT EXISTS blog_platforms (
         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
