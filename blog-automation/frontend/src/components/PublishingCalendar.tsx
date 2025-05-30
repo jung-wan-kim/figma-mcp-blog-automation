@@ -130,9 +130,9 @@ export default function PublishingCalendar() {
         </div>
       </div>
 
-      <div className="space-y-3 flex flex-col items-center">
+      <div className="space-y-1 flex flex-col items-center">
         {/* 월 라벨 */}
-        <div className="flex text-[10px] text-gray-500 mb-2 max-w-4xl">
+        <div className="flex text-[10px] text-gray-500 max-w-4xl">
           <div className="w-8"></div>
           <div className="flex gap-[2px]" style={{ width: 'calc(100% - 40px)' }}>
             {Array.from({ length: 53 }, (_, weekIndex) => {
