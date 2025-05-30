@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { PublishRequest, BlogPlatform } from '@/types';
+import { useState } from 'react';
+import { PublishRequest } from '@/types';
 
 interface ContentFormProps {
   onSubmit: (data: PublishRequest) => void;
@@ -16,36 +16,13 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     target_length: 3000,
     tone: '친근하고 전문적인',
     blog_platform: {
-      name: '',
+      name: '티스토리 블로그',
       platform_type: 'tistory',
-      url: '',
+      url: 'https://example.tistory.com',
     },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
-  const [platforms, setPlatforms] = useState<BlogPlatform[]>([]);
-  const [loadingPlatforms, setLoadingPlatforms] = useState(true);
-
-  // 등록된 플랫폼 목록 가져오기
-  useEffect(() => {
-    const fetchPlatforms = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/platforms`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setPlatforms(data.platforms || []);
-        }
-      } catch (error) {
-        console.error('플랫폼 목록 가져오기 실패:', error);
-      } finally {
-        setLoadingPlatforms(false);
-      }
-    };
-
-    fetchPlatforms();
-  }, []);
 
   const handleKeywordAdd = () => {
     if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
@@ -64,28 +41,10 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     });
   };
 
-  const handlePlatformSelect = (platformId: string) => {
-    const selectedPlatform = platforms.find((p) => p.id === platformId);
-    if (selectedPlatform) {
-      setFormData({
-        ...formData,
-        blog_platform: {
-          name: selectedPlatform.name,
-          platform_type: selectedPlatform.platform_type || selectedPlatform.type || 'tistory',
-          url: selectedPlatform.url,
-        },
-      });
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.keywords.length === 0) {
       alert('최소 1개 이상의 키워드를 입력해주세요');
-      return;
-    }
-    if (!formData.blog_platform.url) {
-      alert('발행할 블로그 플랫폼을 선택해주세요');
       return;
     }
     onSubmit(formData);
@@ -99,23 +58,21 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
         {/* 키워드 입력 */}
         <div>
           <label className="block text-sm font-medium text-black mb-2">키워드 *</label>
-          <div className="flex space-x-2 mb-3">
+          <div className="mb-3">
             <input
               type="text"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
-              placeholder="키워드를 입력하세요"
-              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleKeywordAdd();
+                }
+              }}
+              placeholder="키워드를 입력하고 엔터를 누르세요"
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
               style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
             />
-            <button
-              type="button"
-              onClick={handleKeywordAdd}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
-            >
-              추가
-            </button>
           </div>
 
           {/* 키워드 태그 */}
@@ -192,55 +149,6 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               <option value="전문적이고 상세한">전문적이고 상세한</option>
             </select>
           </div>
-        </div>
-
-        {/* 블로그 플랫폼 선택 */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-black">발행할 블로그 플랫폼</h3>
-
-          {loadingPlatforms ? (
-            <div className="animate-pulse">
-              <div className="h-10 bg-gray-200 rounded"></div>
-            </div>
-          ) : platforms.length > 0 ? (
-            <div>
-              <label className="block text-sm font-medium text-black mb-2">
-                등록된 플랫폼 선택 *
-              </label>
-              <select
-                value={platforms.find((p) => p.url === formData.blog_platform.url)?.id || ''}
-                onChange={(e) => handlePlatformSelect(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
-                style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
-              >
-                <option value="">플랫폼을 선택하세요</option>
-                {platforms.map((platform) => (
-                  <option key={platform.id} value={platform.id}>
-                    {platform.name} ({platform.platform_type || platform.type}) - {platform.url}
-                  </option>
-                ))}
-              </select>
-
-              {formData.blog_platform.url && (
-                <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                  <p className="text-sm text-blue-800">
-                    <strong>선택된 플랫폼:</strong> {formData.blog_platform.name}
-                  </p>
-                  <p className="text-sm text-blue-600">{formData.blog_platform.url}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-black mb-3">등록된 플랫폼이 없습니다</p>
-              <a
-                href="/platforms"
-                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
-              >
-                플랫폼 등록하기 →
-              </a>
-            </div>
-          )}
         </div>
 
         {/* 에러 메시지 */}
