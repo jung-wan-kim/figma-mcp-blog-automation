@@ -569,15 +569,19 @@ async def test_publish_content(request: PublishRequest):
             clean_text = re.sub(r'<[^>]+>', '', dummy_content)
             actual_word_count = len(clean_text.replace(' ', '').replace('\n', ''))
             
-            # 더미 대표 이미지 생성 (표시용)
-            dummy_featured_image = ImageInfo(
-                id="embedded_featured",
-                url="",  # 빈 URL - 이미지가 본문에 포함되어 있음
-                thumb_url="",
-                alt_text=f"{request.keywords[0]} 관련 이미지",
-                attribution={"photographer": "Embedded", "source": "Content"},
-                width=800, height=600
-            )
+            # 대표 이미지 설정 (첫 번째 title_image 사용)
+            if title_images:
+                featured_image = title_images[0]
+            else:
+                # 백업용 Lorem Picsum 이미지
+                featured_image = ImageInfo(
+                    id="picsum_fallback",
+                    url="https://picsum.photos/800/600?random=1",
+                    thumb_url="https://picsum.photos/300/200?random=1",
+                    alt_text=f"{request.keywords[0]} 관련 이미지",
+                    attribution={"photographer": "Lorem Picsum", "source": "https://picsum.photos"},
+                    width=800, height=600
+                )
             
             content_response = ContentResponse(
                 title=f"{request.keywords[0]} 완벽 가이드 - 전문가가 알려주는 핵심 포인트",
@@ -585,7 +589,7 @@ async def test_publish_content(request: PublishRequest):
                 meta_description=f"{request.keywords[0]}에 대한 전문적이고 상세한 가이드입니다. 기초부터 고급까지 모든 내용을 다룹니다.",
                 word_count=actual_word_count,
                 ai_model_used="unsplash-integrated",
-                featured_image=dummy_featured_image,
+                featured_image=featured_image,
                 suggested_images={
                     "title_based": [],
                     "keyword_based": []
