@@ -260,7 +260,50 @@ async def test_publish_content(request: PublishRequest):
             tone=request.tone
         )
         
-        content_response = await test_generate_content(content_request)
+        # Claude API가 없으면 더미 콘텐츠 생성
+        if not claude_client:
+            # 더미 콘텐츠 생성
+            dummy_content = f"""
+            <h2>🤖 AI가 생성한 {request.keywords[0]} 가이드</h2>
+            <p>안녕하세요! 오늘은 <strong>{request.keywords[0]}</strong>에 대해 자세히 알아보겠습니다.</p>
+            
+            <h3>📚 주요 내용</h3>
+            <ul>
+                <li>{request.keywords[0]}의 기본 개념</li>
+                <li>실무에서의 활용 방법</li>
+                <li>최신 동향과 트렌드</li>
+                <li>실제 사례 분석</li>
+            </ul>
+            
+            <h3>🔍 상세 분석</h3>
+            <p>{request.keywords[0]}는 현재 많은 주목을 받고 있는 주제입니다. 이 글에서는 {request.tone} 관점에서 {request.keywords[0]}에 대해 총 {request.target_length}자 분량으로 설명드리겠습니다.</p>
+            
+            <h3>💡 핵심 포인트</h3>
+            <p>다음과 같은 핵심 포인트들을 기억해주세요:</p>
+            <ol>
+                <li>기본 원리를 먼저 이해하세요</li>
+                <li>실습을 통해 경험을 쌓으세요</li>
+                <li>지속적으로 학습하고 발전시키세요</li>
+            </ol>
+            
+            <h3>🎯 결론</h3>
+            <p>{request.keywords[0]}는 앞으로도 계속 발전할 분야입니다. 이 글이 여러분의 이해에 도움이 되기를 바랍니다.</p>
+            """
+            
+            content_response = ContentResponse(
+                title=f"{request.keywords[0]} 완벽 가이드 - 전문가가 알려주는 핵심 포인트",
+                content=dummy_content.strip(),
+                meta_description=f"{request.keywords[0]}에 대한 전문적이고 상세한 가이드입니다. 기초부터 고급까지 모든 내용을 다룹니다.",
+                word_count=request.target_length,
+                ai_model_used="dummy-content-generator",
+                featured_image=(await search_images(request.keywords[0], 1))[0],
+                suggested_images={
+                    "title_based": await search_images(f"{request.keywords[0]} 가이드", 2),
+                    "keyword_based": await search_images(" ".join(request.keywords), 2)
+                }
+            )
+        else:
+            content_response = await test_generate_content(content_request)
         
         # 2. 블로그 발행 시뮬레이션
         published_url = f"{request.blog_platform.url}/posts/{len(published_posts) + 1}"
