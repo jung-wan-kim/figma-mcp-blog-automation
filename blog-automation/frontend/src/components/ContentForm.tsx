@@ -99,7 +99,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
       <h2 className="text-xl font-semibold text-black mb-6">콘텐츠 생성 설정</h2>
 
       {/* 디버깅용 상태 표시 */}
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-black">
         <p>
           <strong>키워드 입력값:</strong> &quot;{keywordInput}&quot;
         </p>

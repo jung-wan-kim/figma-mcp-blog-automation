@@ -46,8 +46,8 @@ export default function CreatePage() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">✍️ 콘텐츠 생성 및 발행</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-black">✍️ 콘텐츠 생성 및 발행</h1>
+          <p className="mt-2 text-black">
             AI를 활용해 고품질 블로그 콘텐츠를 생성하고 원하는 플랫폼에 발행하세요
           </p>
         </div>
