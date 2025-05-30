@@ -52,8 +52,6 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
   return (
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-black mb-6">콘텐츠 생성 설정</h2>
-
       <form onSubmit={handleSubmit} className="space-y-6" style={{ color: '#000000' }}>
         {/* 키워드 입력 */}
         <div>
