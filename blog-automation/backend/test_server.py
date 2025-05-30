@@ -191,22 +191,55 @@ async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
     unsplash_access_key = os.getenv("UNSPLASH_ACCESS_KEY")
     
     if not unsplash_access_key:
-        # Unsplash API 키가 없으면 Lorem Picsum 사용
+        print(f"Unsplash API 키가 설정되지 않음 - Lorem Picsum 사용")
         return await search_images_fallback(query, count)
     
+    print(f"Unsplash API 키 확인됨: {unsplash_access_key[:10]}...")
+    
     try:
-        async with aiohttp.ClientSession() as session:
+        # 한국어 키워드를 영어로 간단 변환
+        query_en = query
+        korean_to_english = {
+            "AI": "artificial intelligence",
+            "인공지능": "artificial intelligence",
+            "기술": "technology",
+            "프로그래밍": "programming",
+            "개발": "development",
+            "소프트웨어": "software",
+            "컴퓨터": "computer",
+            "데이터": "data",
+            "빅데이터": "big data",
+            "머신러닝": "machine learning",
+            "딥러닝": "deep learning",
+            "웹": "web",
+            "앱": "app",
+            "모바일": "mobile",
+            "클라우드": "cloud"
+        }
+        
+        for ko, en in korean_to_english.items():
+            if ko in query:
+                query_en = query.replace(ko, en)
+                break
+        
+        print(f"검색 쿼리 변환: '{query}' -> '{query_en}'")
+        
+        # 타임아웃 설정 추가
+        timeout = aiohttp.ClientTimeout(total=5)  # 5초 타임아웃으로 단축
+        async with aiohttp.ClientSession(timeout=timeout) as session:
             url = "https://api.unsplash.com/search/photos"
             headers = {
                 "Authorization": f"Client-ID {unsplash_access_key}"
             }
             params = {
-                "query": query,
+                "query": query_en,
                 "per_page": count,
                 "orientation": "landscape",
                 "content_filter": "high",
                 "order_by": "relevant"
             }
+            
+            print(f"Unsplash API 호출: query='{query_en}', count={count}")
             
             async with session.get(url, headers=headers, params=params) as response:
                 if response.status == 200:
@@ -228,6 +261,7 @@ async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
                             height=image["height"]
                         ))
                     
+                    print(f"Unsplash API 성공: {len(images)}개 이미지 반환")
                     return images if images else await search_images_fallback(query, count)
                 else:
                     print(f"Unsplash API 오류: {response.status}")

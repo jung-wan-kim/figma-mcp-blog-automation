@@ -47,9 +47,6 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     fetchPlatforms();
   }, []);
 
-  // 디버깅용 로그
-  console.log('ContentForm state:', { formData, keywordInput, platforms });
-
   const handleKeywordAdd = () => {
     if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
       setFormData({
@@ -97,19 +94,6 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
   return (
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-black mb-6">콘텐츠 생성 설정</h2>
-
-      {/* 디버깅용 상태 표시 */}
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-black">
-        <p>
-          <strong>키워드 입력값:</strong> &quot;{keywordInput}&quot;
-        </p>
-        <p>
-          <strong>선택된 플랫폼:</strong> {formData.blog_platform.name || '없음'}
-        </p>
-        <p>
-          <strong>등록된 플랫폼 수:</strong> {platforms.length}개
-        </p>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-6" style={{ color: '#000000' }}>
         {/* 키워드 입력 */}
