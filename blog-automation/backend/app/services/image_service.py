@@ -74,54 +74,30 @@ class ImageService:
         return formatted
     
     def _get_default_images(self, count: int) -> List[Dict]:
-        """기본 이미지 반환 (API 키가 없거나 오류 시)"""
-        default_images = [
-            {
-                "id": "default_1",
-                "url": "https://via.placeholder.com/800x600/4A90E2/FFFFFF?text=Blog+Image+1",
-                "thumb_url": "https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Blog+Image+1",
-                "download_url": "https://via.placeholder.com/1200x800/4A90E2/FFFFFF?text=Blog+Image+1",
-                "alt_text": "블로그 이미지 1",
+        """기본 이미지 반환 (Lorem Picsum을 사용한 실제 고품질 사진)"""
+        default_images = []
+        
+        # 일관된 이미지를 위한 기본 시드
+        base_seed = 42
+        
+        for i in range(3):  # 최대 3개 이미지
+            image_seed = base_seed + i * 150
+            
+            default_images.append({
+                "id": f"picsum_default_{i+1}",
+                "url": f"https://picsum.photos/800/600?random={image_seed}",
+                "thumb_url": f"https://picsum.photos/300/200?random={image_seed}",
+                "download_url": f"https://picsum.photos/1200/800?random={image_seed}",
+                "alt_text": f"블로그 이미지 {i+1}",
                 "attribution": {
-                    "photographer": "Placeholder",
-                    "photographer_url": "#",
-                    "source": "Placeholder",
-                    "source_url": "#"
+                    "photographer": "Lorem Picsum",
+                    "photographer_url": "https://picsum.photos",
+                    "source": "Lorem Picsum",
+                    "source_url": "https://picsum.photos"
                 },
                 "width": 800,
                 "height": 600
-            },
-            {
-                "id": "default_2",
-                "url": "https://via.placeholder.com/800x600/50C878/FFFFFF?text=Blog+Image+2",
-                "thumb_url": "https://via.placeholder.com/300x200/50C878/FFFFFF?text=Blog+Image+2",
-                "download_url": "https://via.placeholder.com/1200x800/50C878/FFFFFF?text=Blog+Image+2",
-                "alt_text": "블로그 이미지 2",
-                "attribution": {
-                    "photographer": "Placeholder",
-                    "photographer_url": "#",
-                    "source": "Placeholder",
-                    "source_url": "#"
-                },
-                "width": 800,
-                "height": 600
-            },
-            {
-                "id": "default_3",
-                "url": "https://via.placeholder.com/800x600/FF6B6B/FFFFFF?text=Blog+Image+3",
-                "thumb_url": "https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=Blog+Image+3",
-                "download_url": "https://via.placeholder.com/1200x800/FF6B6B/FFFFFF?text=Blog+Image+3",
-                "alt_text": "블로그 이미지 3",
-                "attribution": {
-                    "photographer": "Placeholder",
-                    "photographer_url": "#",
-                    "source": "Placeholder",
-                    "source_url": "#"
-                },
-                "width": 800,
-                "height": 600
-            }
-        ]
+            })
         
         return default_images[:count]
     
