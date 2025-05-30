@@ -71,9 +71,8 @@ export default function PublishingCalendar() {
     let currentMonth = -1;
     let isFirstMonth = true;
 
-    const totalWeeks = Math.ceil(yearData.length / 7);
-    // 주별로 확인
-    for (let weekIndex = 0; weekIndex < totalWeeks; weekIndex++) {
+    // 53주 동안 주별로 확인
+    for (let weekIndex = 0; weekIndex < 53; weekIndex++) {
       const startOfWeekIndex = weekIndex * 7;
       if (startOfWeekIndex >= yearData.length) break;
 
@@ -165,7 +164,7 @@ export default function PublishingCalendar() {
           {/* 활동 그리드 */}
           <div style={{ width: 'calc(100% - 40px)' }}>
             <div className="flex gap-[2px]">
-              {Array.from({ length: Math.ceil(yearData.length / 7) }, (_, weekIndex) => (
+              {Array.from({ length: 53 }, (_, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-[2px]">
                   {Array.from({ length: 7 }, (_, dayIndex) => {
                     const activityIndex = weekIndex * 7 + dayIndex;
