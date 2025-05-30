@@ -26,7 +26,7 @@ app = FastAPI(
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001"],  # Next.js 개발 서버
+    allow_origins=["http://localhost:3001", "http://127.0.0.1:3001", "*"],  # Next.js 개발 서버 및 모든 오리진 허용
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -295,16 +295,28 @@ async def get_dashboard_stats():
     """대시보드 통계 조회 - Supabase에서 데이터 조회"""
     try:
         # Supabase에서 블로그 플랫폼 조회
-        platforms_response = supabase.table("blog_platforms").select("*").execute()
-        platforms = platforms_response.data if platforms_response.data else []
+        try:
+            platforms_response = supabase.table("blog_platforms").select("*").execute()
+            platforms = platforms_response.data if platforms_response.data else []
+        except Exception as e:
+            print(f"플랫폼 조회 오류 (테이블이 없을 수 있음): {e}")
+            platforms = []
         
         # Supabase에서 최근 게시물 조회
-        posts_response = supabase.table("blog_posts").select("*").order("created_at", desc=True).limit(5).execute()
-        recent_posts = posts_response.data if posts_response.data else []
+        try:
+            posts_response = supabase.table("blog_posts").select("*").order("created_at", desc=True).limit(5).execute()
+            recent_posts = posts_response.data if posts_response.data else []
+        except Exception as e:
+            print(f"게시물 조회 오류 (테이블이 없을 수 있음): {e}")
+            recent_posts = []
         
         # 총 게시물 수 조회
-        total_posts_response = supabase.table("blog_posts").select("id", count="exact").execute()
-        total_posts = total_posts_response.count if total_posts_response.count else 0
+        try:
+            total_posts_response = supabase.table("blog_posts").select("id", count="exact").execute()
+            total_posts = total_posts_response.count if total_posts_response.count else 0
+        except Exception as e:
+            print(f"게시물 수 조회 오류: {e}")
+            total_posts = 0
         
         return {
             "total_posts": total_posts,
@@ -322,11 +334,44 @@ async def get_dashboard_stats():
 
 @app.get("/dashboard/posts")
 async def get_published_posts():
-    """발행된 글 목록 조회"""
-    return {
-        "posts": published_posts,
-        "total": len(published_posts)
-    }
+    """발행된 글 목록 조회 - Supabase에서 조회"""
+    try:
+        # Supabase에서 게시물 조회 (플랫폼 정보와 함께)
+        response = supabase.table("blog_posts").select("*, blog_platforms(*)").order("created_at", desc=True).execute()
+        posts = response.data if response.data else []
+        
+        # 데이터 형식 변환 (프론트엔드 호환)
+        formatted_posts = []
+        for post in posts:
+            platform_info = post.get('blog_platforms', {})
+            formatted_posts.append({
+                "id": post.get('id'),
+                "title": post.get('title'),
+                "content": post.get('content'),
+                "platform": {
+                    "name": platform_info.get('name', ''),
+                    "platform_type": platform_info.get('platform_type', ''),
+                    "url": platform_info.get('url', ''),
+                    "username": platform_info.get('username', '')
+                },
+                "published_url": post.get('published_url', ''),
+                "published_at": post.get('published_at', post.get('created_at')),
+                "status": post.get('status', 'draft'),
+                "views": post.get('views', 0),
+                "likes": post.get('likes', 0),
+                "comments": post.get('comments', 0)
+            })
+        
+        return {
+            "posts": formatted_posts,
+            "total": len(formatted_posts)
+        }
+    except Exception as e:
+        print(f"게시물 목록 조회 오류: {e}")
+        return {
+            "posts": [],
+            "total": 0
+        }
 
 @app.get("/dashboard/platforms")
 async def get_platforms():
@@ -384,4 +429,4 @@ if __name__ == "__main__":
     print("🚀 블로그 자동화 테스트 서버 시작!")
     print("📖 API 문서: http://localhost:8000/docs")
     print("🤖 Claude API 테스트: http://localhost:8000/test/claude")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)
