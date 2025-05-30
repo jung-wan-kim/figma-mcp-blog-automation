@@ -185,34 +185,26 @@ async def test_generate_content(request: ContentRequest):
         raise HTTPException(status_code=500, detail=f"콘텐츠 생성 실패: {str(e)}")
 
 async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
-    """이미지 검색 (기본 이미지 반환)"""
-    default_images = [
-        ImageInfo(
-            id="default_1",
-            url="https://via.placeholder.com/800x600/4A90E2/FFFFFF?text=Blog+Image+1",
-            thumb_url="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Blog+Image+1",
-            alt_text="블로그 이미지 1",
-            attribution={"photographer": "Placeholder", "source": "Placeholder"},
+    """이미지 검색 (Lorem Picsum을 사용한 실제 고품질 사진)"""
+    images = []
+    
+    # 쿼리를 기반으로 일관된 이미지를 생성하기 위해 해시 사용
+    query_hash = hash(query) % 1000
+    
+    for i in range(count):
+        # 각 이미지마다 다른 시드 사용
+        image_seed = (query_hash + i * 100) % 1000
+        
+        images.append(ImageInfo(
+            id=f"picsum_{query_hash}_{i}",
+            url=f"https://picsum.photos/800/600?random={image_seed}",
+            thumb_url=f"https://picsum.photos/300/200?random={image_seed}",
+            alt_text=f"{query} 관련 이미지 {i+1}",
+            attribution={"photographer": "Lorem Picsum", "source": "https://picsum.photos"},
             width=800, height=600
-        ),
-        ImageInfo(
-            id="default_2", 
-            url="https://via.placeholder.com/800x600/50C878/FFFFFF?text=Blog+Image+2",
-            thumb_url="https://via.placeholder.com/300x200/50C878/FFFFFF?text=Blog+Image+2",
-            alt_text="블로그 이미지 2",
-            attribution={"photographer": "Placeholder", "source": "Placeholder"},
-            width=800, height=600
-        ),
-        ImageInfo(
-            id="default_3",
-            url="https://via.placeholder.com/800x600/FF6B6B/FFFFFF?text=Blog+Image+3", 
-            thumb_url="https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=Blog+Image+3",
-            alt_text="블로그 이미지 3",
-            attribution={"photographer": "Placeholder", "source": "Placeholder"},
-            width=800, height=600
-        )
-    ]
-    return default_images[:count]
+        ))
+    
+    return images
 
 @app.get("/test/claude")
 async def test_claude_connection():
