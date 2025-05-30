@@ -12,6 +12,7 @@ from anthropic import Anthropic
 import os
 from dotenv import load_dotenv
 import aiohttp
+from app.core.supabase import get_supabase_client
 
 # 환경 변수 로드
 load_dotenv()
@@ -31,8 +32,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Claude 클라이언트 초기화
-claude_client = Anthropic(api_key=os.getenv("CLAUDE_API_KEY"))
+# Claude 클라이언트 초기화 (선택적)
+try:
+    claude_client = Anthropic(api_key=os.getenv("CLAUDE_API_KEY")) if os.getenv("CLAUDE_API_KEY") else None
+except Exception as e:
+    print(f"Claude 클라이언트 초기화 실패: {e}")
+    claude_client = None
 
 class ContentRequest(BaseModel):
     keywords: List[str]
@@ -213,8 +218,8 @@ async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
 async def test_claude_connection():
     """Claude API 연결 테스트"""
     
-    if not os.getenv("CLAUDE_API_KEY"):
-        return {"status": "error", "message": "Claude API 키가 설정되지 않았습니다"}
+    if not claude_client:
+        return {"status": "error", "message": "Claude API 키가 설정되지 않았거나 클라이언트 초기화에 실패했습니다"}
     
     try:
         response = claude_client.messages.create(
@@ -235,6 +240,9 @@ async def test_claude_connection():
             "status": "error", 
             "message": f"Claude API 연결 실패: {str(e)}"
         }
+
+# Supabase 클라이언트 초기화
+supabase = get_supabase_client()
 
 # 임시 발행 내역 저장소 (실제로는 데이터베이스 사용)
 published_posts = []
@@ -284,31 +292,33 @@ async def test_publish_content(request: PublishRequest):
 
 @app.get("/dashboard/stats")
 async def get_dashboard_stats():
-    """대시보드 통계 조회"""
-    
-    total_posts = len(published_posts)
-    platforms = {}
-    
-    for post in published_posts:
-        platform_name = post["platform"]["name"]
-        if platform_name not in platforms:
-            platforms[platform_name] = {
-                "name": platform_name,
-                "type": post["platform"]["platform_type"],
-                "url": post["platform"]["url"],
-                "post_count": 0,
-                "total_views": 0,
-                "total_likes": 0
-            }
-        platforms[platform_name]["post_count"] += 1
-        platforms[platform_name]["total_views"] += post["views"]
-        platforms[platform_name]["total_likes"] += post["likes"]
-    
-    return {
-        "total_posts": total_posts,
-        "platforms": list(platforms.values()),
-        "recent_posts": published_posts[-5:] if published_posts else []
-    }
+    """대시보드 통계 조회 - Supabase에서 데이터 조회"""
+    try:
+        # Supabase에서 블로그 플랫폼 조회
+        platforms_response = supabase.table("blog_platforms").select("*").execute()
+        platforms = platforms_response.data if platforms_response.data else []
+        
+        # Supabase에서 최근 게시물 조회
+        posts_response = supabase.table("blog_posts").select("*").order("created_at", desc=True).limit(5).execute()
+        recent_posts = posts_response.data if posts_response.data else []
+        
+        # 총 게시물 수 조회
+        total_posts_response = supabase.table("blog_posts").select("id", count="exact").execute()
+        total_posts = total_posts_response.count if total_posts_response.count else 0
+        
+        return {
+            "total_posts": total_posts,
+            "platforms": platforms,
+            "recent_posts": recent_posts
+        }
+    except Exception as e:
+        # Supabase 연결 실패 시 기본값 반환
+        print(f"Supabase 연결 오류: {e}")
+        return {
+            "total_posts": 0,
+            "platforms": [],
+            "recent_posts": []
+        }
 
 @app.get("/dashboard/posts")
 async def get_published_posts():
@@ -320,19 +330,54 @@ async def get_published_posts():
 
 @app.get("/dashboard/platforms")
 async def get_platforms():
-    """등록된 플랫폼 목록"""
-    platforms = []
-    for post in published_posts:
-        platform = post["platform"]
-        if not any(p["url"] == platform["url"] for p in platforms):
-            platforms.append({
-                "name": platform["name"],
-                "type": platform["platform_type"], 
-                "url": platform["url"],
-                "post_count": sum(1 for p in published_posts if p["platform"]["url"] == platform["url"])
-            })
-    
-    return {"platforms": platforms}
+    """등록된 플랫폼 목록 - Supabase에서 조회"""
+    try:
+        response = supabase.table("blog_platforms").select("*").execute()
+        return {"platforms": response.data if response.data else []}
+    except Exception as e:
+        print(f"플랫폼 조회 오류: {e}")
+        return {"platforms": []}
+
+@app.post("/dashboard/platforms")
+async def add_platform(platform_data: dict):
+    """새 블로그 플랫폼 추가"""
+    try:
+        response = supabase.table("blog_platforms").insert({
+            "name": platform_data["name"],
+            "platform_type": platform_data["type"],
+            "url": platform_data["url"],
+            "username": platform_data.get("username", ""),
+            "post_count": 0,
+            "total_views": 0,
+            "total_likes": 0
+        }).execute()
+        
+        return {"success": True, "platform": response.data[0]}
+    except Exception as e:
+        print(f"플랫폼 추가 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"플랫폼 추가 실패: {str(e)}")
+
+@app.post("/dashboard/posts")
+async def save_post(post_data: dict):
+    """새 게시물을 Supabase에 저장"""
+    try:
+        response = supabase.table("blog_posts").insert({
+            "title": post_data["title"],
+            "content": post_data["content"],
+            "platform_id": post_data.get("platform_id"),
+            "published_url": post_data.get("published_url", ""),
+            "status": post_data.get("status", "published"),
+            "views": post_data.get("views", 0),
+            "likes": post_data.get("likes", 0),
+            "comments": post_data.get("comments", 0),
+            "tags": post_data.get("tags", []),
+            "meta_description": post_data.get("meta_description", "")
+        }).execute()
+        
+        return {"success": True, "post": response.data[0]}
+    except Exception as e:
+        print(f"게시물 저장 오류: {e}")
+        raise HTTPException(status_code=500, detail=f"게시물 저장 실패: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
