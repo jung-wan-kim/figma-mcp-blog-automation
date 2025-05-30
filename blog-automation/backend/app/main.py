@@ -95,3 +95,64 @@ async def health_check():
             "supabase": "error",
             "error": str(e)
         }
+
+
+# Dashboard endpoints (temporary mock data)
+@app.get("/dashboard/stats")
+async def get_dashboard_stats():
+    """대시보드 통계 정보"""
+    return {
+        "totalPosts": 0,
+        "totalViews": 0,
+        "totalPlatforms": 3,
+        "scheduledPosts": 0
+    }
+
+
+@app.get("/dashboard/publishing-activity")
+async def get_publishing_activity():
+    """발행 활동 데이터 (GitHub 스타일 캘린더용)"""
+    return {
+        "activities": []
+    }
+
+
+@app.get("/dashboard/posts")
+async def get_posts():
+    """발행된 포스트 목록"""
+    return {
+        "posts": []
+    }
+
+
+@app.get("/dashboard/platforms")
+async def get_platforms():
+    """연결된 플랫폼 목록"""
+    try:
+        result = supabase_client.table('blog_platforms').select("*").execute()
+        return {
+            "platforms": result.data
+        }
+    except Exception as e:
+        return {
+            "platforms": [],
+            "error": str(e)
+        }
+
+
+@app.post("/dashboard/platforms")
+async def add_platform(platform: dict):
+    """새 플랫폼 추가"""
+    return {
+        "success": False,
+        "message": "API implementation pending"
+    }
+
+
+@app.post("/test/publish")
+async def test_publish(content: dict):
+    """테스트 발행"""
+    return {
+        "success": False,
+        "message": "API implementation pending"
+    }

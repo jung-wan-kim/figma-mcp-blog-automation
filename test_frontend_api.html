@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend API Test</title>
+</head>
+<body>
+    <h1>Frontend API Test</h1>
+    <button onclick="testAPI()">Test Dashboard Stats API</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            try {
+                resultDiv.textContent = 'Fetching...';
+                const response = await fetch('http://localhost:8000/dashboard/stats', {
+                    headers: {
+                        'Origin': 'http://localhost:3001'
+                    }
+                });
+                const data = await response.json();
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Auto test on load
+        testAPI();
+    </script>
+</body>
+</html>
