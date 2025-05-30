@@ -262,39 +262,98 @@ async def test_publish_content(request: PublishRequest):
         
         # Claude API가 없으면 더미 콘텐츠 생성
         if not claude_client:
-            # 더미 콘텐츠 생성
-            dummy_content = f"""
-            <h2>🤖 AI가 생성한 {request.keywords[0]} 가이드</h2>
-            <p>안녕하세요! 오늘은 <strong>{request.keywords[0]}</strong>에 대해 자세히 알아보겠습니다.</p>
+            # 요청된 글자 수에 맞춰 더 긴 콘텐츠 생성
+            sections = []
             
-            <h3>📚 주요 내용</h3>
-            <ul>
-                <li>{request.keywords[0]}의 기본 개념</li>
-                <li>실무에서의 활용 방법</li>
-                <li>최신 동향과 트렌드</li>
-                <li>실제 사례 분석</li>
-            </ul>
+            # 기본 섹션들
+            sections.append(f"<h2>🤖 AI가 생성한 {request.keywords[0]} 완벽 가이드</h2>")
+            sections.append(f"<p>안녕하세요! 오늘은 <strong>{request.keywords[0]}</strong>에 대해 {request.tone} 스타일로 자세히 알아보겠습니다. 이 글은 총 {request.target_length}자 분량으로 작성되어 초보자부터 전문가까지 모든 수준의 독자에게 유용한 정보를 제공합니다.</p>")
             
-            <h3>🔍 상세 분석</h3>
-            <p>{request.keywords[0]}는 현재 많은 주목을 받고 있는 주제입니다. 이 글에서는 {request.tone} 관점에서 {request.keywords[0]}에 대해 총 {request.target_length}자 분량으로 설명드리겠습니다.</p>
+            sections.append(f"<h3>📚 {request.keywords[0]}란 무엇인가?</h3>")
+            sections.append(f"<p>{request.keywords[0]}는 현재 가장 주목받고 있는 분야 중 하나입니다. 이 기술이 등장한 배경부터 현재의 발전 상황까지, 그리고 앞으로의 전망까지 종합적으로 살펴보겠습니다. 특히 {request.content_type} 형태로 정리하여 독자 여러분이 쉽게 이해할 수 있도록 구성했습니다.</p>")
             
-            <h3>💡 핵심 포인트</h3>
-            <p>다음과 같은 핵심 포인트들을 기억해주세요:</p>
-            <ol>
-                <li>기본 원리를 먼저 이해하세요</li>
-                <li>실습을 통해 경험을 쌓으세요</li>
-                <li>지속적으로 학습하고 발전시키세요</li>
-            </ol>
+            sections.append(f"<h3>🚀 {request.keywords[0]}의 핵심 개념</h3>")
+            sections.append(f"<p>{request.keywords[0]}를 이해하기 위해서는 먼저 기본 개념을 명확히 해야 합니다. 이 분야의 전문가들이 공통적으로 강조하는 핵심 원리들을 정리해보겠습니다.</p>")
+            sections.append("<ul>")
+            sections.append(f"<li><strong>기본 원리:</strong> {request.keywords[0]}의 핵심이 되는 원리와 작동 메커니즘을 이해하는 것이 가장 중요합니다.</li>")
+            sections.append(f"<li><strong>실용적 접근:</strong> 이론적 지식과 함께 실제 적용 사례를 통해 {request.keywords[0]}를 체험해보는 것이 필요합니다.</li>")
+            sections.append(f"<li><strong>지속적 학습:</strong> {request.keywords[0]} 분야는 빠르게 발전하고 있어 지속적인 학습과 업데이트가 필수입니다.</li>")
+            sections.append(f"<li><strong>커뮤니티 참여:</strong> 관련 커뮤니티에 참여하여 다른 전문가들과 지식을 공유하고 토론하는 것이 중요합니다.</li>")
+            sections.append("</ul>")
             
-            <h3>🎯 결론</h3>
-            <p>{request.keywords[0]}는 앞으로도 계속 발전할 분야입니다. 이 글이 여러분의 이해에 도움이 되기를 바랍니다.</p>
-            """
+            sections.append(f"<h3>🔍 {request.keywords[0]}의 실무 활용법</h3>")
+            sections.append(f"<p>이론을 넘어서 실제 업무나 프로젝트에서 {request.keywords[0]}를 어떻게 활용할 수 있는지 구체적인 방법들을 알아보겠습니다. 다양한 산업 분야에서의 적용 사례와 함께 실무에서 바로 사용할 수 있는 팁들을 제공합니다.</p>")
+            
+            sections.append("<ol>")
+            sections.append(f"<li><strong>계획 수립:</strong> {request.keywords[0]}를 도입하기 전에 명확한 목표와 계획을 수립해야 합니다. 현재 상황을 분석하고 달성하고자 하는 목표를 구체적으로 정의하는 것이 성공의 첫걸음입니다.</li>")
+            sections.append(f"<li><strong>단계별 적용:</strong> 한 번에 모든 것을 바꾸려 하지 말고 단계별로 점진적으로 {request.keywords[0]}를 적용해 나가는 것이 현명합니다. 작은 성공을 축적하면서 점차 확대해 나가세요.</li>")
+            sections.append(f"<li><strong>성과 측정:</strong> {request.keywords[0]} 도입 후 정기적으로 성과를 측정하고 평가해야 합니다. 객관적인 지표를 통해 개선점을 찾고 지속적으로 최적화해 나가세요.</li>")
+            sections.append("</ol>")
+            
+            sections.append(f"<h3>💡 {request.keywords[0]}의 최신 트렌드</h3>")
+            sections.append(f"<p>{request.keywords[0]} 분야는 매우 빠르게 발전하고 있습니다. 최근의 주요 트렌드와 앞으로 주목해야 할 발전 방향들을 정리해보겠습니다. 이러한 트렌드를 미리 파악하고 준비한다면 경쟁 우위를 확보할 수 있을 것입니다.</p>")
+            
+            sections.append(f"<h4>🔥 주요 트렌드</h4>")
+            sections.append(f"<p>현재 {request.keywords[0]} 분야에서 가장 주목받고 있는 트렌드들을 살펴보면, 자동화와 지능화가 핵심 키워드로 떠오르고 있습니다. 또한 사용자 경험 개선과 접근성 향상도 중요한 관심사가 되고 있습니다.</p>")
+            
+            sections.append(f"<h3>🛠️ {request.keywords[0]} 구현 가이드</h3>")
+            sections.append(f"<p>실제로 {request.keywords[0]}를 구현하고 적용하는 과정에서 알아두면 유용한 팁들과 주의사항들을 정리했습니다. 초보자도 따라할 수 있도록 단계별로 상세히 설명하겠습니다.</p>")
+            
+            sections.append(f"<blockquote><p><strong>전문가 팁:</strong> {request.keywords[0]}를 처음 시작하는 분들은 너무 복잡한 것부터 시도하지 마세요. 기본기를 탄탄히 다진 후에 고급 기능들을 하나씩 추가해 나가는 것이 성공의 비결입니다.</p></blockquote>")
+            
+            sections.append(f"<h3>📊 {request.keywords[0]}의 성과 측정</h3>")
+            sections.append(f"<p>{request.keywords[0]}를 도입한 후에는 반드시 그 효과를 측정하고 평가해야 합니다. 정량적 지표와 정성적 평가를 모두 활용하여 종합적으로 판단하는 것이 중요합니다.</p>")
+            
+            sections.append(f"<h3>🔧 {request.keywords[0]} 도구 및 리소스</h3>")
+            sections.append(f"<p>{request.keywords[0]}를 효과적으로 활용하기 위해서는 적절한 도구와 리소스를 활용하는 것이 중요합니다. 현재 시장에서 사용할 수 있는 다양한 도구들을 소개하고, 각각의 특징과 장단점을 비교해보겠습니다.</p>")
+            
+            sections.append(f"<h4>📱 필수 도구들</h4>")
+            sections.append("<ul>")
+            sections.append(f"<li><strong>기본 도구:</strong> {request.keywords[0]}를 시작하는 데 반드시 필요한 기본적인 도구들입니다. 대부분 무료로 사용할 수 있어 초보자에게 적합합니다.</li>")
+            sections.append(f"<li><strong>고급 도구:</strong> 더 전문적인 작업을 위한 고급 도구들로, 유료 버전도 있지만 그만큼 강력한 기능을 제공합니다.</li>")
+            sections.append(f"<li><strong>통합 솔루션:</strong> {request.keywords[0]}의 전 과정을 관리할 수 있는 통합 플랫폼들입니다. 팀 작업에 특히 유용합니다.</li>")
+            sections.append("</ul>")
+            
+            sections.append(f"<h3>📚 {request.keywords[0]} 학습 자료</h3>")
+            sections.append(f"<p>{request.keywords[0]}를 깊이 있게 학습하고 싶은 분들을 위해 추천 학습 자료들을 정리했습니다. 온라인 강의부터 전문 서적까지 다양한 형태의 자료들을 수준별로 분류하여 소개합니다.</p>")
+            
+            sections.append(f"<h4>📖 추천 도서</h4>")
+            sections.append(f"<p>이론적 배경부터 실무 적용까지 체계적으로 학습할 수 있는 도서들을 선별했습니다. {request.keywords[0]} 분야의 권위 있는 저자들이 집필한 책들로, 입문서부터 전문서까지 다양한 수준을 다루고 있습니다.</p>")
+            
+            sections.append(f"<h3>🌐 {request.keywords[0]} 커뮤니티</h3>")
+            sections.append(f"<p>{request.keywords[0]} 분야의 전문가들과 소통하고 최신 정보를 얻을 수 있는 온라인 커뮤니티들을 소개합니다. 이러한 커뮤니티에 참여하면 실무 경험을 공유하고 문제 해결에 도움을 받을 수 있습니다.</p>")
+            
+            sections.append(f"<h3>🚨 {request.keywords[0]} 주의사항</h3>")
+            sections.append(f"<p>{request.keywords[0]}를 도입하고 운영하는 과정에서 자주 발생하는 실수들과 주의해야 할 점들을 정리했습니다. 이러한 주의사항들을 미리 알아두면 시행착오를 줄이고 더 효율적으로 목표를 달성할 수 있습니다.</p>")
+            
+            sections.append("<ol>")
+            sections.append(f"<li><strong>과도한 기대:</strong> {request.keywords[0]}는 만능 해결책이 아닙니다. 현실적인 목표를 설정하고 단계적으로 접근하는 것이 중요합니다.</li>")
+            sections.append(f"<li><strong>보안 간과:</strong> {request.keywords[0]}를 도입할 때 보안 측면을 간과하면 큰 문제가 발생할 수 있습니다. 처음부터 보안을 고려하여 설계하세요.</li>")
+            sections.append(f"<li><strong>유지보수 부족:</strong> 초기 구축에만 집중하고 지속적인 유지보수를 소홀히 하면 성능이 급격히 저하될 수 있습니다.</li>")
+            sections.append("</ol>")
+            
+            sections.append(f"<h3>💼 {request.keywords[0]} 비즈니스 활용</h3>")
+            sections.append(f"<p>기업 환경에서 {request.keywords[0]}를 활용하는 방법과 성공 사례들을 살펴보겠습니다. 다양한 규모의 기업들이 어떻게 {request.keywords[0]}를 도입하여 비즈니스 가치를 창출했는지 구체적인 사례를 통해 알아보겠습니다.</p>")
+            
+            sections.append(f"<h3>🎯 결론 및 향후 전망</h3>")
+            sections.append(f"<p>{request.keywords[0]}는 앞으로도 계속 발전할 분야입니다. 이 글에서 다룬 내용들을 바탕으로 여러분만의 {request.keywords[0]} 활용 방안을 수립해보시기 바랍니다. 지속적인 학습과 실습을 통해 이 분야의 전문가로 성장하실 수 있을 것입니다.</p>")
+            
+            sections.append(f"<p>특히 {request.tone} 관점에서 접근할 때, {request.keywords[0]}의 진정한 가치를 발견할 수 있습니다. 이론과 실무를 균형 있게 조합하여 실질적인 성과를 달성하시기 바랍니다.</p>")
+            
+            sections.append(f"<p>마지막으로, {request.keywords[0]}에 관심을 가지고 이 글을 끝까지 읽어주신 여러분께 감사드립니다. 앞으로도 더 유용한 정보로 찾아뵙겠습니다. 궁금한 점이 있으시면 언제든 댓글로 문의해주세요!</p>")
+            
+            dummy_content = "\n".join(sections)
+            
+            # 실제 글자 수 계산 (HTML 태그 제외)
+            import re
+            clean_text = re.sub(r'<[^>]+>', '', dummy_content)
+            actual_word_count = len(clean_text.replace(' ', '').replace('\n', ''))
             
             content_response = ContentResponse(
                 title=f"{request.keywords[0]} 완벽 가이드 - 전문가가 알려주는 핵심 포인트",
                 content=dummy_content.strip(),
                 meta_description=f"{request.keywords[0]}에 대한 전문적이고 상세한 가이드입니다. 기초부터 고급까지 모든 내용을 다룹니다.",
-                word_count=request.target_length,
+                word_count=actual_word_count,
                 ai_model_used="dummy-content-generator",
                 featured_image=(await search_images(request.keywords[0], 1))[0],
                 suggested_images={
