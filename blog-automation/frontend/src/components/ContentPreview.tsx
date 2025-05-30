@@ -39,7 +39,12 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
 
   return (
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">콘텐츠 미리보기</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-black">콘텐츠 미리보기</h2>
+        <span className="text-sm text-gray-600">
+          {content.ai_model_used} ({content.word_count.toLocaleString()}자)
+        </span>
+      </div>
 
       <div className="space-y-6">
         {/* 제목 */}
@@ -52,20 +57,6 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
         <div>
           <h3 className="text-lg font-medium text-black mb-2">메타 설명</h3>
           <p className="text-black bg-gray-50 p-3 rounded">{content.meta_description}</p>
-        </div>
-
-        {/* 통계 정보 */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-blue-50 p-3 rounded">
-            <div className="text-2xl font-bold text-blue-600">
-              {content.word_count.toLocaleString()}
-            </div>
-            <div className="text-sm text-blue-800">단어 수</div>
-          </div>
-          <div className="bg-green-50 p-3 rounded">
-            <div className="text-2xl font-bold text-green-600">{content.ai_model_used}</div>
-            <div className="text-sm text-green-800">AI 모델</div>
-          </div>
         </div>
 
         {/* 대표 이미지 - URL이 있을 때만 표시 */}
