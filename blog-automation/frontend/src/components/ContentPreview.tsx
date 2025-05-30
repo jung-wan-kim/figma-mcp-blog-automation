@@ -80,13 +80,12 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
           </div>
         )}
 
-        {/* 콘텐츠 본문 (HTML 렌더링) */}
+        {/* 콘텐츠 본문 (마크다운 스타일링) */}
         <div>
           <h3 className="text-lg font-medium text-black mb-2">본문</h3>
-          <div
-            className="prose max-w-none bg-gray-50 p-4 rounded-lg text-sm text-black"
-            dangerouslySetInnerHTML={{ __html: content.content }}
-          />
+          <div className="bg-gray-50 p-4 rounded-lg text-sm text-black whitespace-pre-wrap">
+            {content.content}
+          </div>
         </div>
 
         {/* 추천 이미지 - 이미지가 있을 때만 표시 */}
