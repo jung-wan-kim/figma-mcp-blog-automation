@@ -361,9 +361,18 @@ async def get_publishing_activity():
         from datetime import datetime, timedelta
         from collections import defaultdict
         
-        # 지난 1년간의 날짜 범위 생성
+        # GitHub 스타일: 현재 날짜가 마지막 주 일요일에 오도록 계산
         today = datetime.now().date()
-        one_year_ago = today - timedelta(days=365)
+        
+        # 현재 날짜의 요일 (0=월요일, 6=일요일)
+        today_weekday = today.weekday()
+        
+        # 현재 날짜가 속한 주의 일요일을 찾기
+        days_until_sunday = (6 - today_weekday) % 7
+        end_date = today + timedelta(days=days_until_sunday)
+        
+        # 53주 전의 일요일부터 시작 (총 371일, 53주)
+        start_date = end_date - timedelta(days=52 * 7)
         
         # 날짜별 발행 수 집계
         activity_by_date = defaultdict(int)
@@ -381,17 +390,17 @@ async def get_publishing_activity():
                 else:
                     post_date = today
                     
-                if one_year_ago <= post_date <= today:
+                if start_date <= post_date <= end_date:
                     activity_by_date[post_date.isoformat()] += 1
                     posts_by_date[post_date.isoformat()].append(post.get('title', '제목 없음'))
             except Exception as e:
                 print(f"날짜 파싱 오류: {e}")
                 continue
         
-        # 1년간 모든 날짜에 대해 데이터 생성
+        # 모든 날짜에 대해 데이터 생성
         activities = []
-        current_date = one_year_ago
-        while current_date <= today:
+        current_date = start_date
+        while current_date <= end_date:
             date_str = current_date.isoformat()
             activities.append({
                 "date": date_str,
@@ -405,21 +414,27 @@ async def get_publishing_activity():
             "total_posts": len(published_posts),
             "active_days": len([a for a in activities if a["count"] > 0]),
             "date_range": {
-                "start": one_year_ago.isoformat(),
-                "end": today.isoformat()
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
             }
         }
         
     except Exception as e:
         print(f"발행 활동 조회 오류: {str(e)}")
         # 오류 시 빈 데이터 반환
+        today = datetime.now().date()
+        today_weekday = today.weekday()
+        days_until_sunday = (6 - today_weekday) % 7
+        end_date = today + timedelta(days=days_until_sunday)
+        start_date = end_date - timedelta(days=52 * 7)
+        
         return {
             "activities": [],
             "total_posts": 0,
             "active_days": 0,
             "date_range": {
-                "start": (datetime.now().date() - timedelta(days=365)).isoformat(),
-                "end": datetime.now().date().isoformat()
+                "start": start_date.isoformat(),
+                "end": end_date.isoformat()
             }
         }
 

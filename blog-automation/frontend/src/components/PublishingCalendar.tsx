@@ -64,7 +64,7 @@ export default function PublishingCalendar() {
     return 'bg-green-600';
   };
 
-  const getWeekDays = (): string[] => ['일', '월', '화', '수', '목', '금', '토'];
+  const getWeekDays = (): string[] => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const getMonthLabels = (): { label: string; week: number }[] => {
     const months: { label: string; week: number }[] = [];
@@ -80,7 +80,7 @@ export default function PublishingCalendar() {
       if (month !== currentMonth && date.getDate() <= 7) {
         currentMonth = month;
         months.push({
-          label: date.toLocaleDateString('ko-KR', { month: 'short' }),
+          label: date.toLocaleDateString('en-US', { month: 'short' }),
           week: weekIndex,
         });
       }
@@ -141,21 +141,34 @@ export default function PublishingCalendar() {
           {/* 요일 라벨 */}
           <div className="flex flex-col text-xs text-gray-500 mr-2">
             {getWeekDays().map((day, index) => (
-              <div key={index} className="h-3 w-6 flex items-center">
-                {index % 2 === 1 ? day : ''}
+              <div key={index} className="h-3 w-8 flex items-center">
+                {index % 2 === 0 ? day : ''}
               </div>
             ))}
           </div>
 
           {/* 활동 그리드 */}
-          <div className="flex flex-wrap" style={{ width: 'calc(100% - 32px)' }}>
-            {yearData.map((activity) => (
-              <div
-                key={activity.date}
-                className={`w-3 h-3 rounded-sm mr-1 mb-1 ${getColorIntensity(activity.count)} hover:ring-2 hover:ring-gray-400 cursor-pointer transition-all`}
-                title={`${formatDate(activity.date)}: ${activity.count}개 포스트 발행`}
-              />
-            ))}
+          <div style={{ width: 'calc(100% - 40px)' }}>
+            <div className="flex gap-1">
+              {Array.from({ length: 53 }, (_, weekIndex) => (
+                <div key={weekIndex} className="flex flex-col gap-1">
+                  {Array.from({ length: 7 }, (_, dayIndex) => {
+                    const activityIndex = weekIndex * 7 + dayIndex;
+                    const activity = yearData[activityIndex];
+
+                    if (!activity) return <div key={dayIndex} className="w-3 h-3" />;
+
+                    return (
+                      <div
+                        key={activity.date}
+                        className={`w-3 h-3 rounded-sm ${getColorIntensity(activity.count)} hover:ring-2 hover:ring-gray-400 cursor-pointer transition-all`}
+                        title={`${formatDate(activity.date)}: ${activity.count}개 포스트 발행`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
