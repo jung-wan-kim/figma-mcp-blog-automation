@@ -98,6 +98,19 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6">콘텐츠 생성 설정</h2>
 
+      {/* 디버깅용 상태 표시 */}
+      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+        <p>
+          <strong>키워드 입력값:</strong> &quot;{keywordInput}&quot;
+        </p>
+        <p>
+          <strong>선택된 플랫폼:</strong> {formData.blog_platform.name || '없음'}
+        </p>
+        <p>
+          <strong>등록된 플랫폼 수:</strong> {platforms.length}개
+        </p>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* 키워드 입력 */}
         <div>
@@ -109,7 +122,8 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
               placeholder="키워드를 입력하세요"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              style={{ color: '#111827', backgroundColor: '#ffffff' }}
             />
             <button
               type="button"
@@ -146,7 +160,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           <select
             value={formData.content_type}
             onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
           >
             <option value="blog_post">블로그 포스트</option>
             <option value="guide">가이드</option>
@@ -162,7 +176,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           <select
             value={formData.target_length}
             onChange={(e) => setFormData({ ...formData, target_length: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
           >
             <option value={1000}>짧은 글 (1,000자)</option>
             <option value={1500}>보통 글 (1,500자)</option>
@@ -179,7 +193,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           <select
             value={formData.tone}
             onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
           >
             <option value="친근하고 전문적인">친근하고 전문적인</option>
             <option value="정중하고 격식있는">정중하고 격식있는</option>
@@ -204,7 +218,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               <select
                 value={platforms.find((p) => p.url === formData.blog_platform.url)?.id || ''}
                 onChange={(e) => handlePlatformSelect(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
               >
                 <option value="">플랫폼을 선택하세요</option>
                 {platforms.map((platform) => (
