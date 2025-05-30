@@ -24,6 +24,9 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
   const [keywordInput, setKeywordInput] = useState('');
 
+  // 디버깅용 로그
+  console.log('ContentForm state:', { formData, keywordInput });
+
   const handleKeywordAdd = () => {
     if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
       setFormData({
@@ -69,7 +72,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
               placeholder="키워드를 입력하세요"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             />
             <button
               type="button"
@@ -106,7 +109,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           <select
             value={formData.content_type}
             onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="blog_post">블로그 포스트</option>
             <option value="guide">가이드</option>
@@ -126,7 +129,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             min="1000"
             max="5000"
             step="500"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
 
@@ -136,7 +139,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           <select
             value={formData.tone}
             onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           >
             <option value="친근하고 전문적인">친근하고 전문적인</option>
             <option value="정중하고 격식있는">정중하고 격식있는</option>
@@ -161,7 +164,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
                 })
               }
               placeholder="예: 개발자 블로그"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             />
           </div>
 
@@ -175,7 +178,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
                   blog_platform: { ...formData.blog_platform, platform_type: e.target.value },
                 })
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               <option value="tistory">Tistory</option>
               <option value="wordpress">WordPress</option>
@@ -195,7 +198,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
                 })
               }
               placeholder="https://myblog.tistory.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             />
           </div>
         </div>
