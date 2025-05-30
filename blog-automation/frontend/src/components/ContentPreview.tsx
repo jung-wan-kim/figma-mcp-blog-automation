@@ -68,8 +68,8 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
           </div>
         </div>
 
-        {/* 대표 이미지 */}
-        {content.featured_image && (
+        {/* 대표 이미지 - URL이 있을 때만 표시 */}
+        {content.featured_image && content.featured_image.url && (
           <div>
             <h3 className="text-lg font-medium text-black mb-2">대표 이미지</h3>
             <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -98,49 +98,53 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
           />
         </div>
 
-        {/* 추천 이미지 */}
-        {content.suggested_images && (
-          <div>
-            <h3 className="text-lg font-medium text-black mb-2">추천 이미지</h3>
-            <div className="space-y-4">
-              {/* 제목 기반 이미지 */}
-              {content.suggested_images.title_based &&
-                content.suggested_images.title_based.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-black mb-2">제목 기반</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {content.suggested_images.title_based.map((image) => (
-                        <img
-                          key={image.id}
-                          src={image.thumb_url}
-                          alt={image.alt_text}
-                          className="w-full h-24 object-cover rounded border border-gray-200"
-                        />
-                      ))}
+        {/* 추천 이미지 - 이미지가 있을 때만 표시 */}
+        {content.suggested_images &&
+          ((content.suggested_images.title_based &&
+            content.suggested_images.title_based.length > 0) ||
+            (content.suggested_images.keyword_based &&
+              content.suggested_images.keyword_based.length > 0)) && (
+            <div>
+              <h3 className="text-lg font-medium text-black mb-2">추천 이미지</h3>
+              <div className="space-y-4">
+                {/* 제목 기반 이미지 */}
+                {content.suggested_images.title_based &&
+                  content.suggested_images.title_based.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-black mb-2">제목 기반</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {content.suggested_images.title_based.map((image) => (
+                          <img
+                            key={image.id}
+                            src={image.thumb_url}
+                            alt={image.alt_text}
+                            className="w-full h-24 object-cover rounded border border-gray-200"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-              {/* 키워드 기반 이미지 */}
-              {content.suggested_images.keyword_based &&
-                content.suggested_images.keyword_based.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-black mb-2">키워드 기반</h4>
-                    <div className="grid grid-cols-2 gap-2">
-                      {content.suggested_images.keyword_based.map((image) => (
-                        <img
-                          key={image.id}
-                          src={image.thumb_url}
-                          alt={image.alt_text}
-                          className="w-full h-24 object-cover rounded border border-gray-200"
-                        />
-                      ))}
+                {/* 키워드 기반 이미지 */}
+                {content.suggested_images.keyword_based &&
+                  content.suggested_images.keyword_based.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-black mb-2">키워드 기반</h4>
+                      <div className="grid grid-cols-2 gap-2">
+                        {content.suggested_images.keyword_based.map((image) => (
+                          <img
+                            key={image.id}
+                            src={image.thumb_url}
+                            alt={image.alt_text}
+                            className="w-full h-24 object-cover rounded border border-gray-200"
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   );

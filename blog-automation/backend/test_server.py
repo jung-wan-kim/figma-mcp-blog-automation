@@ -185,7 +185,60 @@ async def test_generate_content(request: ContentRequest):
         raise HTTPException(status_code=500, detail=f"콘텐츠 생성 실패: {str(e)}")
 
 async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
-    """이미지 검색 (Lorem Picsum을 사용한 실제 고품질 사진)"""
+    """Unsplash API를 사용한 키워드 기반 이미지 검색"""
+    
+    # Unsplash API 설정
+    unsplash_access_key = os.getenv("UNSPLASH_ACCESS_KEY")
+    
+    if not unsplash_access_key:
+        # Unsplash API 키가 없으면 Lorem Picsum 사용
+        return await search_images_fallback(query, count)
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            url = "https://api.unsplash.com/search/photos"
+            headers = {
+                "Authorization": f"Client-ID {unsplash_access_key}"
+            }
+            params = {
+                "query": query,
+                "per_page": count,
+                "orientation": "landscape",
+                "content_filter": "high",
+                "order_by": "relevant"
+            }
+            
+            async with session.get(url, headers=headers, params=params) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    images = []
+                    
+                    for image in data.get("results", []):
+                        images.append(ImageInfo(
+                            id=image["id"],
+                            url=image["urls"]["regular"],
+                            thumb_url=image["urls"]["thumb"],
+                            alt_text=image.get("alt_description", f"{query} 관련 이미지") or f"{query} 관련 이미지",
+                            attribution={
+                                "photographer": image["user"]["name"],
+                                "source": "Unsplash",
+                                "source_url": image["links"]["html"]
+                            },
+                            width=image["width"],
+                            height=image["height"]
+                        ))
+                    
+                    return images if images else await search_images_fallback(query, count)
+                else:
+                    print(f"Unsplash API 오류: {response.status}")
+                    return await search_images_fallback(query, count)
+    
+    except Exception as e:
+        print(f"Unsplash API 호출 실패: {str(e)}")
+        return await search_images_fallback(query, count)
+
+async def search_images_fallback(query: str, count: int = 3) -> List[ImageInfo]:
+    """Unsplash API 실패 시 Lorem Picsum을 사용한 백업 이미지 검색"""
     images = []
     
     # 쿼리를 기반으로 일관된 이미지를 생성하기 위해 해시 사용
@@ -254,12 +307,20 @@ async def test_publish_content(request: PublishRequest):
         
         # Claude API가 없으면 더미 콘텐츠 생성
         if not claude_client:
-            # 요청된 글자 수에 맞춰 더 긴 콘텐츠 생성
+            # 이미지 검색 먼저 실행
+            title_images = await search_images(request.keywords[0], count=3)
+            keyword_images = await search_images(" ".join(request.keywords), count=2)
+            
+            # 본문에 이미지를 배치한 콘텐츠 생성
             sections = []
             
             # 기본 섹션들
             sections.append(f"<h2>🤖 AI가 생성한 {request.keywords[0]} 완벽 가이드</h2>")
             sections.append(f"<p>안녕하세요! 오늘은 <strong>{request.keywords[0]}</strong>에 대해 {request.tone} 스타일로 자세히 알아보겠습니다. 이 글은 총 {request.target_length}자 분량으로 작성되어 초보자부터 전문가까지 모든 수준의 독자에게 유용한 정보를 제공합니다.</p>")
+            
+            # 첫 번째 이미지 배치
+            if title_images:
+                sections.append(f'<div style="text-align: center; margin: 20px 0;"><img src="{title_images[0].url}" alt="{title_images[0].alt_text}" style="max-width: 100%; height: auto; border-radius: 8px;" /></div>')
             
             sections.append(f"<h3>📚 {request.keywords[0]}란 무엇인가?</h3>")
             sections.append(f"<p>{request.keywords[0]}는 현재 가장 주목받고 있는 분야 중 하나입니다. 이 기술이 등장한 배경부터 현재의 발전 상황까지, 그리고 앞으로의 전망까지 종합적으로 살펴보겠습니다. 특히 {request.content_type} 형태로 정리하여 독자 여러분이 쉽게 이해할 수 있도록 구성했습니다.</p>")
@@ -273,6 +334,10 @@ async def test_publish_content(request: PublishRequest):
             sections.append(f"<li><strong>커뮤니티 참여:</strong> 관련 커뮤니티에 참여하여 다른 전문가들과 지식을 공유하고 토론하는 것이 중요합니다.</li>")
             sections.append("</ul>")
             
+            # 두 번째 이미지 배치
+            if len(title_images) > 1:
+                sections.append(f'<div style="text-align: center; margin: 20px 0;"><img src="{title_images[1].url}" alt="{title_images[1].alt_text}" style="max-width: 100%; height: auto; border-radius: 8px;" /></div>')
+            
             sections.append(f"<h3>🔍 {request.keywords[0]}의 실무 활용법</h3>")
             sections.append(f"<p>이론을 넘어서 실제 업무나 프로젝트에서 {request.keywords[0]}를 어떻게 활용할 수 있는지 구체적인 방법들을 알아보겠습니다. 다양한 산업 분야에서의 적용 사례와 함께 실무에서 바로 사용할 수 있는 팁들을 제공합니다.</p>")
             
@@ -285,6 +350,10 @@ async def test_publish_content(request: PublishRequest):
             sections.append(f"<h3>💡 {request.keywords[0]}의 최신 트렌드</h3>")
             sections.append(f"<p>{request.keywords[0]} 분야는 매우 빠르게 발전하고 있습니다. 최근의 주요 트렌드와 앞으로 주목해야 할 발전 방향들을 정리해보겠습니다. 이러한 트렌드를 미리 파악하고 준비한다면 경쟁 우위를 확보할 수 있을 것입니다.</p>")
             
+            # 세 번째 이미지 배치
+            if keyword_images:
+                sections.append(f'<div style="text-align: center; margin: 20px 0;"><img src="{keyword_images[0].url}" alt="{keyword_images[0].alt_text}" style="max-width: 100%; height: auto; border-radius: 8px;" /></div>')
+            
             sections.append(f"<h4>🔥 주요 트렌드</h4>")
             sections.append(f"<p>현재 {request.keywords[0]} 분야에서 가장 주목받고 있는 트렌드들을 살펴보면, 자동화와 지능화가 핵심 키워드로 떠오르고 있습니다. 또한 사용자 경험 개선과 접근성 향상도 중요한 관심사가 되고 있습니다.</p>")
             
@@ -295,6 +364,10 @@ async def test_publish_content(request: PublishRequest):
             
             sections.append(f"<h3>📊 {request.keywords[0]}의 성과 측정</h3>")
             sections.append(f"<p>{request.keywords[0]}를 도입한 후에는 반드시 그 효과를 측정하고 평가해야 합니다. 정량적 지표와 정성적 평가를 모두 활용하여 종합적으로 판단하는 것이 중요합니다.</p>")
+            
+            # 네 번째 이미지 배치
+            if len(title_images) > 2:
+                sections.append(f'<div style="text-align: center; margin: 20px 0;"><img src="{title_images[2].url}" alt="{title_images[2].alt_text}" style="max-width: 100%; height: auto; border-radius: 8px;" /></div>')
             
             sections.append(f"<h3>🔧 {request.keywords[0]} 도구 및 리소스</h3>")
             sections.append(f"<p>{request.keywords[0]}를 효과적으로 활용하기 위해서는 적절한 도구와 리소스를 활용하는 것이 중요합니다. 현재 시장에서 사용할 수 있는 다양한 도구들을 소개하고, 각각의 특징과 장단점을 비교해보겠습니다.</p>")
@@ -308,24 +381,6 @@ async def test_publish_content(request: PublishRequest):
             
             sections.append(f"<h3>📚 {request.keywords[0]} 학습 자료</h3>")
             sections.append(f"<p>{request.keywords[0]}를 깊이 있게 학습하고 싶은 분들을 위해 추천 학습 자료들을 정리했습니다. 온라인 강의부터 전문 서적까지 다양한 형태의 자료들을 수준별로 분류하여 소개합니다.</p>")
-            
-            sections.append(f"<h4>📖 추천 도서</h4>")
-            sections.append(f"<p>이론적 배경부터 실무 적용까지 체계적으로 학습할 수 있는 도서들을 선별했습니다. {request.keywords[0]} 분야의 권위 있는 저자들이 집필한 책들로, 입문서부터 전문서까지 다양한 수준을 다루고 있습니다.</p>")
-            
-            sections.append(f"<h3>🌐 {request.keywords[0]} 커뮤니티</h3>")
-            sections.append(f"<p>{request.keywords[0]} 분야의 전문가들과 소통하고 최신 정보를 얻을 수 있는 온라인 커뮤니티들을 소개합니다. 이러한 커뮤니티에 참여하면 실무 경험을 공유하고 문제 해결에 도움을 받을 수 있습니다.</p>")
-            
-            sections.append(f"<h3>🚨 {request.keywords[0]} 주의사항</h3>")
-            sections.append(f"<p>{request.keywords[0]}를 도입하고 운영하는 과정에서 자주 발생하는 실수들과 주의해야 할 점들을 정리했습니다. 이러한 주의사항들을 미리 알아두면 시행착오를 줄이고 더 효율적으로 목표를 달성할 수 있습니다.</p>")
-            
-            sections.append("<ol>")
-            sections.append(f"<li><strong>과도한 기대:</strong> {request.keywords[0]}는 만능 해결책이 아닙니다. 현실적인 목표를 설정하고 단계적으로 접근하는 것이 중요합니다.</li>")
-            sections.append(f"<li><strong>보안 간과:</strong> {request.keywords[0]}를 도입할 때 보안 측면을 간과하면 큰 문제가 발생할 수 있습니다. 처음부터 보안을 고려하여 설계하세요.</li>")
-            sections.append(f"<li><strong>유지보수 부족:</strong> 초기 구축에만 집중하고 지속적인 유지보수를 소홀히 하면 성능이 급격히 저하될 수 있습니다.</li>")
-            sections.append("</ol>")
-            
-            sections.append(f"<h3>💼 {request.keywords[0]} 비즈니스 활용</h3>")
-            sections.append(f"<p>기업 환경에서 {request.keywords[0]}를 활용하는 방법과 성공 사례들을 살펴보겠습니다. 다양한 규모의 기업들이 어떻게 {request.keywords[0]}를 도입하여 비즈니스 가치를 창출했는지 구체적인 사례를 통해 알아보겠습니다.</p>")
             
             sections.append(f"<h3>🎯 결론 및 향후 전망</h3>")
             sections.append(f"<p>{request.keywords[0]}는 앞으로도 계속 발전할 분야입니다. 이 글에서 다룬 내용들을 바탕으로 여러분만의 {request.keywords[0]} 활용 방안을 수립해보시기 바랍니다. 지속적인 학습과 실습을 통해 이 분야의 전문가로 성장하실 수 있을 것입니다.</p>")
@@ -341,16 +396,26 @@ async def test_publish_content(request: PublishRequest):
             clean_text = re.sub(r'<[^>]+>', '', dummy_content)
             actual_word_count = len(clean_text.replace(' ', '').replace('\n', ''))
             
+            # 더미 대표 이미지 생성 (표시용)
+            dummy_featured_image = ImageInfo(
+                id="embedded_featured",
+                url="",  # 빈 URL - 이미지가 본문에 포함되어 있음
+                thumb_url="",
+                alt_text=f"{request.keywords[0]} 관련 이미지",
+                attribution={"photographer": "Embedded", "source": "Content"},
+                width=800, height=600
+            )
+            
             content_response = ContentResponse(
                 title=f"{request.keywords[0]} 완벽 가이드 - 전문가가 알려주는 핵심 포인트",
                 content=dummy_content.strip(),
                 meta_description=f"{request.keywords[0]}에 대한 전문적이고 상세한 가이드입니다. 기초부터 고급까지 모든 내용을 다룹니다.",
                 word_count=actual_word_count,
-                ai_model_used="dummy-content-generator",
-                featured_image=(await search_images(request.keywords[0], 1))[0],
+                ai_model_used="unsplash-integrated",
+                featured_image=dummy_featured_image,
                 suggested_images={
-                    "title_based": await search_images(f"{request.keywords[0]} 가이드", 2),
-                    "keyword_based": await search_images(" ".join(request.keywords), 2)
+                    "title_based": [],
+                    "keyword_based": []
                 }
             )
         else:
