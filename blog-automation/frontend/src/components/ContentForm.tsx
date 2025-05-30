@@ -96,7 +96,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
   return (
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">콘텐츠 생성 설정</h2>
+      <h2 className="text-xl font-semibold text-black mb-6">콘텐츠 생성 설정</h2>
 
       {/* 디버깅용 상태 표시 */}
       <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
@@ -114,7 +114,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
       <form onSubmit={handleSubmit} className="space-y-6" style={{ color: '#000000' }}>
         {/* 키워드 입력 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">키워드 *</label>
+          <label className="block text-sm font-medium text-black mb-2">키워드 *</label>
           <div className="flex space-x-2 mb-3">
             <input
               type="text"
@@ -122,7 +122,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
               placeholder="키워드를 입력하세요"
-              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
               style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
             />
             <button
@@ -156,11 +156,11 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
         {/* 콘텐츠 유형 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">콘텐츠 유형</label>
+          <label className="block text-sm font-medium text-black mb-2">콘텐츠 유형</label>
           <select
             value={formData.content_type}
             onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
             style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value="blog_post">블로그 포스트</option>
@@ -173,11 +173,11 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
         {/* 글 길이 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">목표 글 길이</label>
+          <label className="block text-sm font-medium text-black mb-2">목표 글 길이</label>
           <select
             value={formData.target_length}
             onChange={(e) => setFormData({ ...formData, target_length: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
             style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value={1000}>짧은 글 (1,000자)</option>
@@ -191,11 +191,11 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
         {/* 톤앤매너 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">톤앤매너</label>
+          <label className="block text-sm font-medium text-black mb-2">톤앤매너</label>
           <select
             value={formData.tone}
             onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
             style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value="친근하고 전문적인">친근하고 전문적인</option>
@@ -207,7 +207,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
         {/* 블로그 플랫폼 선택 */}
         <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-900">발행할 블로그 플랫폼</h3>
+          <h3 className="font-medium text-black">발행할 블로그 플랫폼</h3>
 
           {loadingPlatforms ? (
             <div className="animate-pulse">
@@ -215,13 +215,13 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             </div>
           ) : platforms.length > 0 ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-black mb-2">
                 등록된 플랫폼 선택 *
               </label>
               <select
                 value={platforms.find((p) => p.url === formData.blog_platform.url)?.id || ''}
                 onChange={(e) => handlePlatformSelect(e.target.value)}
-                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
                 style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
               >
                 <option value="">플랫폼을 선택하세요</option>
@@ -243,7 +243,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             </div>
           ) : (
             <div className="text-center py-4">
-              <p className="text-gray-500 mb-3">등록된 플랫폼이 없습니다</p>
+              <p className="text-black mb-3">등록된 플랫폼이 없습니다</p>
               <a
                 href="/platforms"
                 className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"

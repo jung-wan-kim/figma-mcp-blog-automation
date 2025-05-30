@@ -59,7 +59,7 @@ class ContentResponse(BaseModel):
     content: str
     meta_description: str
     word_count: int
-    ai_model_used: str = "claude-3-sonnet"
+    ai_model_used: str = "claude-4-sonnet"
     featured_image: ImageInfo
     suggested_images: Dict[str, List[ImageInfo]]
 
@@ -128,7 +128,7 @@ async def test_generate_content(request: ContentRequest):
         """
         
         response = claude_client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-4-sonnet-20250514",
             max_tokens=3000,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
@@ -173,7 +173,7 @@ async def test_generate_content(request: ContentRequest):
             content=content_body.strip(),
             meta_description=meta_description,
             word_count=word_count,
-            ai_model_used="claude-3-sonnet",
+            ai_model_used="claude-4-sonnet",
             featured_image=title_images[0],
             suggested_images={
                 "title_based": title_images,
@@ -223,7 +223,7 @@ async def test_claude_connection():
     
     try:
         response = claude_client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-4-sonnet-20250514",
             max_tokens=100,
             messages=[{"role": "user", "content": "안녕하세요! Claude API 연결 테스트입니다. 간단히 인사해주세요."}],
             temperature=0.3
