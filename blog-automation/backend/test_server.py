@@ -354,6 +354,75 @@ async def test_claude_connection():
 # 임시 발행 내역 저장소 (실제로는 데이터베이스 사용)
 published_posts = []
 
+@app.get("/dashboard/publishing-activity")
+async def get_publishing_activity():
+    """발행 활동 데이터 반환 (GitHub 잔디 스타일)"""
+    try:
+        from datetime import datetime, timedelta
+        from collections import defaultdict
+        
+        # 지난 1년간의 날짜 범위 생성
+        today = datetime.now().date()
+        one_year_ago = today - timedelta(days=365)
+        
+        # 날짜별 발행 수 집계
+        activity_by_date = defaultdict(int)
+        posts_by_date = defaultdict(list)
+        
+        # published_posts에서 날짜별로 집계
+        for post in published_posts:
+            try:
+                # published_at이 있으면 사용, 없으면 현재 날짜 사용
+                if 'published_at' in post:
+                    if isinstance(post['published_at'], str):
+                        post_date = datetime.fromisoformat(post['published_at'].replace('Z', '+00:00')).date()
+                    else:
+                        post_date = post['published_at'].date()
+                else:
+                    post_date = today
+                    
+                if one_year_ago <= post_date <= today:
+                    activity_by_date[post_date.isoformat()] += 1
+                    posts_by_date[post_date.isoformat()].append(post.get('title', '제목 없음'))
+            except Exception as e:
+                print(f"날짜 파싱 오류: {e}")
+                continue
+        
+        # 1년간 모든 날짜에 대해 데이터 생성
+        activities = []
+        current_date = one_year_ago
+        while current_date <= today:
+            date_str = current_date.isoformat()
+            activities.append({
+                "date": date_str,
+                "count": activity_by_date.get(date_str, 0),
+                "posts": posts_by_date.get(date_str, [])
+            })
+            current_date += timedelta(days=1)
+        
+        return {
+            "activities": activities,
+            "total_posts": len(published_posts),
+            "active_days": len([a for a in activities if a["count"] > 0]),
+            "date_range": {
+                "start": one_year_ago.isoformat(),
+                "end": today.isoformat()
+            }
+        }
+        
+    except Exception as e:
+        print(f"발행 활동 조회 오류: {str(e)}")
+        # 오류 시 빈 데이터 반환
+        return {
+            "activities": [],
+            "total_posts": 0,
+            "active_days": 0,
+            "date_range": {
+                "start": (datetime.now().date() - timedelta(days=365)).isoformat(),
+                "end": datetime.now().date().isoformat()
+            }
+        }
+
 @app.post("/test/publish", response_model=PublishResponse)
 async def test_publish_content(request: PublishRequest):
     """콘텐츠 생성 및 블로그 발행 시뮬레이션"""
@@ -487,13 +556,14 @@ async def test_publish_content(request: PublishRequest):
         published_url = f"{request.blog_platform.url}/posts/{len(published_posts) + 1}"
         
         # 발행 내역 저장
+        from datetime import datetime
         published_post = {
             "id": len(published_posts) + 1,
             "title": content_response.title,
             "content": content_response.content,
             "platform": request.blog_platform.model_dump(),
             "published_url": published_url,
-            "published_at": "2024-01-01T00:00:00Z",
+            "published_at": datetime.now().isoformat() + "Z",
             "status": "published",
             "views": 0,
             "likes": 0,

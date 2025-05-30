@@ -8,40 +8,54 @@ interface PublishingActivity {
   posts: string[];
 }
 
-interface PublishingCalendarProps {
-  data?: PublishingActivity[];
+interface PublishingApiResponse {
+  activities: PublishingActivity[];
+  total_posts: number;
+  active_days: number;
+  date_range: {
+    start: string;
+    end: string;
+  };
 }
 
-export default function PublishingCalendar({ data = [] }: PublishingCalendarProps) {
+export default function PublishingCalendar() {
   const [yearData, setYearData] = useState<PublishingActivity[]>([]);
+  const [stats, setStats] = useState<{ total_posts: number; active_days: number }>({
+    total_posts: 0,
+    active_days: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 지난 1년간의 데이터 생성 (실제로는 props에서 받아옴)
-    const today = new Date();
-    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
-    const activities: PublishingActivity[] = [];
+    fetchPublishingActivity();
+  }, []);
 
-    // 실제 데이터가 있으면 사용, 없으면 샘플 데이터 생성
-    if (data.length > 0) {
-      setYearData(data);
-    } else {
-      // 샘플 데이터 생성
-      for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        const randomActivity = Math.random();
-        let count = 0;
+  const fetchPublishingActivity = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/publishing-activity`
+      );
 
-        if (randomActivity > 0.7) count = Math.floor(Math.random() * 3) + 1;
-
-        activities.push({
-          date: dateStr,
-          count,
-          posts: count > 0 ? [`포스트 ${count}`] : [],
-        });
+      if (!response.ok) {
+        throw new Error('발행 활동 데이터를 가져올 수 없습니다');
       }
-      setYearData(activities);
+
+      const data: PublishingApiResponse = await response.json();
+      setYearData(data.activities);
+      setStats({
+        total_posts: data.total_posts,
+        active_days: data.active_days,
+      });
+    } catch (error) {
+      console.error('발행 활동 데이터 로딩 실패:', error);
+      // 에러 시 빈 데이터로 설정
+      setYearData([]);
+      setStats({ total_posts: 0, active_days: 0 });
+    } finally {
+      setLoading(false);
     }
-  }, [data]);
+  };
 
   const getColorIntensity = (count: number): string => {
     if (count === 0) return 'bg-gray-100';
@@ -84,15 +98,26 @@ export default function PublishingCalendar({ data = [] }: PublishingCalendarProp
     });
   };
 
-  const totalPosts = yearData.reduce((sum, activity) => sum + activity.count, 0);
-  const activeDays = yearData.filter((activity) => activity.count > 0).length;
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-black">발행 활동</h3>
+          <div className="text-sm text-gray-600">로딩 중...</div>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-20 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-black">발행 활동</h3>
         <div className="text-sm text-gray-600">
-          총 {totalPosts}개 포스트 · {activeDays}일 활성
+          총 {stats.total_posts}개 포스트 · {stats.active_days}일 활성
         </div>
       </div>
 
