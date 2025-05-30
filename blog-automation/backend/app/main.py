@@ -101,12 +101,25 @@ async def health_check():
 @app.get("/dashboard/stats")
 async def get_dashboard_stats():
     """대시보드 통계 정보"""
-    return {
-        "totalPosts": 0,
-        "totalViews": 0,
-        "totalPlatforms": 3,
-        "scheduledPosts": 0
-    }
+    try:
+        # Get platforms data
+        platforms_result = supabase_client.table('blog_platforms').select("*").execute()
+        platforms = platforms_result.data or []
+        
+        # Get posts data (currently empty)
+        posts = []
+        
+        return {
+            "total_posts": 0,
+            "platforms": platforms,
+            "recent_posts": posts
+        }
+    except Exception as e:
+        return {
+            "total_posts": 0,
+            "platforms": [],
+            "recent_posts": []
+        }
 
 
 @app.get("/dashboard/publishing-activity")

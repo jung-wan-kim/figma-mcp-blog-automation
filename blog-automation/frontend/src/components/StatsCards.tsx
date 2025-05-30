@@ -7,11 +7,14 @@ interface StatsCardsProps {
 }
 
 export default function StatsCards({ stats }: StatsCardsProps) {
-  const totalViews = stats.platforms.reduce(
+  // Ensure platforms is an array to prevent reduce errors
+  const platforms = stats.platforms || [];
+  
+  const totalViews = platforms.reduce(
     (sum, platform) => sum + (platform.total_views || 0),
     0
   );
-  const totalLikes = stats.platforms.reduce(
+  const totalLikes = platforms.reduce(
     (sum, platform) => sum + (platform.total_likes || 0),
     0
   );
@@ -26,7 +29,7 @@ export default function StatsCards({ stats }: StatsCardsProps) {
     },
     {
       title: '연결된 플랫폼',
-      value: stats.platforms.length,
+      value: platforms.length,
       icon: '🌐',
       color: 'bg-green-500',
       description: '현재 연결된 블로그 플랫폼 수',
