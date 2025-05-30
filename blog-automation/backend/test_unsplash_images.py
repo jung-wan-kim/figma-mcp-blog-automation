@@ -24,8 +24,8 @@ class UnsplashImageTester:
     def __init__(self):
         self.unsplash_access_key = os.getenv('UNSPLASH_ACCESS_KEY')
         self.test_results = []
-        self.max_retries = 30  # 최대 30번 재시도
-        self.retry_interval = 10  # 10초 간격
+        self.max_retries = 10  # 최대 10번 재시도
+        self.retry_interval = 3  # 3초 간격
         self.test_keywords = [
             "technology",
             "programming",
