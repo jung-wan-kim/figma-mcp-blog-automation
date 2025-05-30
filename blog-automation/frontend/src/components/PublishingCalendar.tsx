@@ -69,6 +69,7 @@ export default function PublishingCalendar() {
   const getMonthLabels = (): { label: string; week: number }[] => {
     const months: { label: string; week: number }[] = [];
     let currentMonth = -1;
+    let isFirstMonth = true;
 
     // 52주 동안 주별로 확인
     for (let weekIndex = 0; weekIndex < 52; weekIndex++) {
@@ -81,20 +82,16 @@ export default function PublishingCalendar() {
       const date = new Date(activity.date);
       const month = date.getMonth();
 
-      // 월이 바뀌고, 해당 주의 첫 번째 날이 그 월의 첫 주인 경우만 추가
-      if (month !== currentMonth && weekIndex > 0) {
+      // 월이 바뀔 때만 라벨 추가 (첫 번째 월은 제외)
+      if (month !== currentMonth) {
+        if (!isFirstMonth) {
+          months.push({
+            label: date.toLocaleDateString('en-US', { month: 'short' }),
+            week: weekIndex,
+          });
+        }
         currentMonth = month;
-        months.push({
-          label: date.toLocaleDateString('en-US', { month: 'short' }),
-          week: weekIndex,
-        });
-      } else if (weekIndex === 0) {
-        // 첫 번째 주는 항상 추가
-        currentMonth = month;
-        months.push({
-          label: date.toLocaleDateString('en-US', { month: 'short' }),
-          week: weekIndex,
-        });
+        isFirstMonth = false;
       }
     }
 
@@ -179,7 +176,7 @@ export default function PublishingCalendar() {
                       <div
                         key={activity.date}
                         className={`w-3 h-3 rounded-sm ${getColorIntensity(activity.count)} hover:ring-2 hover:ring-gray-400 cursor-pointer transition-all`}
-                        title={`${formatDate(activity.date)}: ${activity.count}개 포스트 발행`}
+                        title={`${formatDate(activity.date)}: ${activity.count}개 포스트 발행${activity.posts.length > 0 ? '\n' + activity.posts.join('\n') : ''}`}
                       />
                     );
                   })}
