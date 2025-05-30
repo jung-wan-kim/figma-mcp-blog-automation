@@ -4,6 +4,7 @@
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 import asyncio
@@ -19,6 +20,15 @@ app = FastAPI(
     title="Blog Automation Test API",
     description="Claude API 테스트용 간단한 서버",
     version="1.0.0"
+)
+
+# CORS 설정
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001"],  # Next.js 개발 서버
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Claude 클라이언트 초기화
