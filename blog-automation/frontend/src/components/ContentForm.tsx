@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { PublishRequest } from '@/types';
+import { useState, useEffect } from 'react';
+import { PublishRequest, BlogPlatform } from '@/types';
 
 interface ContentFormProps {
   onSubmit: (data: PublishRequest) => void;
@@ -23,9 +23,32 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
   });
 
   const [keywordInput, setKeywordInput] = useState('');
+  const [platforms, setPlatforms] = useState<BlogPlatform[]>([]);
+  const [loadingPlatforms, setLoadingPlatforms] = useState(true);
+
+  // 등록된 플랫폼 목록 가져오기
+  useEffect(() => {
+    const fetchPlatforms = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/platforms`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPlatforms(data.platforms || []);
+        }
+      } catch (error) {
+        console.error('플랫폼 목록 가져오기 실패:', error);
+      } finally {
+        setLoadingPlatforms(false);
+      }
+    };
+
+    fetchPlatforms();
+  }, []);
 
   // 디버깅용 로그
-  console.log('ContentForm state:', { formData, keywordInput });
+  console.log('ContentForm state:', { formData, keywordInput, platforms });
 
   const handleKeywordAdd = () => {
     if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
@@ -44,14 +67,28 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     });
   };
 
+  const handlePlatformSelect = (platformId: string) => {
+    const selectedPlatform = platforms.find((p) => p.id === platformId);
+    if (selectedPlatform) {
+      setFormData({
+        ...formData,
+        blog_platform: {
+          name: selectedPlatform.name,
+          platform_type: selectedPlatform.platform_type || selectedPlatform.type || 'tistory',
+          url: selectedPlatform.url,
+        },
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.keywords.length === 0) {
       alert('최소 1개 이상의 키워드를 입력해주세요');
       return;
     }
-    if (!formData.blog_platform.name || !formData.blog_platform.url) {
-      alert('블로그 플랫폼 정보를 모두 입력해주세요');
+    if (!formData.blog_platform.url) {
+      alert('발행할 블로그 플랫폼을 선택해주세요');
       return;
     }
     onSubmit(formData);
@@ -121,16 +158,19 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
 
         {/* 글 길이 */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">목표 글 길이 (자)</label>
-          <input
-            type="number"
+          <label className="block text-sm font-medium text-gray-700 mb-2">목표 글 길이</label>
+          <select
             value={formData.target_length}
             onChange={(e) => setFormData({ ...formData, target_length: parseInt(e.target.value) })}
-            min="1000"
-            max="5000"
-            step="500"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
+          >
+            <option value={1000}>짧은 글 (1,000자)</option>
+            <option value={1500}>보통 글 (1,500자)</option>
+            <option value={2000}>긴 글 (2,000자)</option>
+            <option value={3000}>상세한 글 (3,000자)</option>
+            <option value={4000}>심층 분석 (4,000자)</option>
+            <option value={5000}>완전한 가이드 (5,000자)</option>
+          </select>
         </div>
 
         {/* 톤앤매너 */}
@@ -148,59 +188,52 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           </select>
         </div>
 
-        {/* 블로그 플랫폼 정보 */}
+        {/* 블로그 플랫폼 선택 */}
         <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-900">블로그 플랫폼 정보</h3>
+          <h3 className="font-medium text-gray-900">발행할 블로그 플랫폼</h3>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">플랫폼 이름 *</label>
-            <input
-              type="text"
-              value={formData.blog_platform.name}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  blog_platform: { ...formData.blog_platform, name: e.target.value },
-                })
-              }
-              placeholder="예: 개발자 블로그"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            />
-          </div>
+          {loadingPlatforms ? (
+            <div className="animate-pulse">
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
+          ) : platforms.length > 0 ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                등록된 플랫폼 선택 *
+              </label>
+              <select
+                value={platforms.find((p) => p.url === formData.blog_platform.url)?.id || ''}
+                onChange={(e) => handlePlatformSelect(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="">플랫폼을 선택하세요</option>
+                {platforms.map((platform) => (
+                  <option key={platform.id} value={platform.id}>
+                    {platform.name} ({platform.platform_type || platform.type}) - {platform.url}
+                  </option>
+                ))}
+              </select>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">플랫폼 유형</label>
-            <select
-              value={formData.blog_platform.platform_type}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  blog_platform: { ...formData.blog_platform, platform_type: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="tistory">Tistory</option>
-              <option value="wordpress">WordPress</option>
-              <option value="naver">Naver Blog</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">블로그 URL *</label>
-            <input
-              type="url"
-              value={formData.blog_platform.url}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  blog_platform: { ...formData.blog_platform, url: e.target.value },
-                })
-              }
-              placeholder="https://myblog.tistory.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            />
-          </div>
+              {formData.blog_platform.url && (
+                <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <strong>선택된 플랫폼:</strong> {formData.blog_platform.name}
+                  </p>
+                  <p className="text-sm text-blue-600">{formData.blog_platform.url}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <p className="text-gray-500 mb-3">등록된 플랫폼이 없습니다</p>
+              <a
+                href="/platforms"
+                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 text-sm"
+              >
+                플랫폼 등록하기 →
+              </a>
+            </div>
+          )}
         </div>
 
         {/* 에러 메시지 */}

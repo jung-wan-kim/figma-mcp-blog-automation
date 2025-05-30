@@ -1,4 +1,5 @@
 export interface BlogPlatform {
+  id?: string; // UUID from backend
   name: string;
   type?: string; // Frontend expects 'type'
   platform_type?: string; // Backend sends 'platform_type'
