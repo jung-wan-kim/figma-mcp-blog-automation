@@ -1,5 +1,8 @@
 from typing import List, Dict, Optional
-import openai
+try:
+    import openai
+except ImportError:
+    openai = None
 from anthropic import Anthropic
 import structlog
 
@@ -11,7 +14,11 @@ logger = structlog.get_logger()
 
 class ContentGeneratorService:
     def __init__(self):
-        self.openai_client = openai.OpenAI(api_key=settings.openai_api_key)
+        # OpenAI는 선택사항
+        self.openai_client = None
+        if openai and settings.openai_api_key:
+            self.openai_client = openai.OpenAI(api_key=settings.openai_api_key)
+        
         self.claude_client = Anthropic(api_key=settings.claude_api_key)
         self.seo_optimizer = SEOOptimizer()
     
@@ -22,7 +29,7 @@ class ContentGeneratorService:
         style_preset: Optional[str] = None,
         target_length: int = 1500,
         tone: Optional[str] = None,
-        ai_model: str = "gpt-4"
+        ai_model: str = "claude"
     ) -> Dict:
         logger.info(
             "Starting content generation",
@@ -82,13 +89,14 @@ class ContentGeneratorService:
         4. 콘텐츠에 포함해야 할 핵심 주제들
         """
         
-        response = self.openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        response = self.claude_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3
         )
         
-        return {"analysis": response.choices[0].message.content}
+        return {"analysis": response.content[0].text}
     
     async def generate_outline(
         self, 
@@ -110,13 +118,14 @@ class ContentGeneratorService:
         각 섹션에는 구체적인 소제목을 포함해주세요.
         """
         
-        response = self.openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        response = self.claude_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5
         )
         
-        return response.choices[0].message.content
+        return response.content[0].text
     
     async def generate_title(
         self,
@@ -140,14 +149,15 @@ class ContentGeneratorService:
         3개의 제목 후보를 제시하고, 가장 추천하는 것을 선택해주세요.
         """
         
-        response = self.openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        response = self.claude_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=500,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
         
         # 응답에서 첫 번째 제목 추출
-        titles = response.choices[0].message.content.split('\n')
+        titles = response.content[0].text.split('\n')
         return titles[0].strip() if titles else f"{keywords[0]}에 대한 완벽 가이드"
     
     async def generate_full_content(
@@ -182,15 +192,7 @@ class ContentGeneratorService:
         - <strong>, <em>으로 강조
         """
         
-        if ai_model == "claude":
-            response = self.claude_client.messages.create(
-                model="claude-3-sonnet-20240229",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=4000,
-                temperature=0.7
-            )
-            return response.content[0].text
-        else:
+        if ai_model == "gpt-4" and self.openai_client:
             response = self.openai_client.chat.completions.create(
                 model="gpt-4-turbo-preview",
                 messages=[{"role": "user", "content": prompt}],
@@ -198,6 +200,15 @@ class ContentGeneratorService:
                 temperature=0.7
             )
             return response.choices[0].message.content
+        else:
+            # 기본적으로 Claude 사용
+            response = self.claude_client.messages.create(
+                model="claude-3-sonnet-20240229",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4000,
+                temperature=0.7
+            )
+            return response.content[0].text
     
     async def generate_meta_description(self, title: str, content: str) -> str:
         prompt = f"""
@@ -213,10 +224,11 @@ class ContentGeneratorService:
         - 글의 핵심 가치나 이점 강조
         """
         
-        response = self.openai_client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+        response = self.claude_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=200,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.5
         )
         
-        return response.choices[0].message.content.strip()
+        return response.content[0].text.strip()
