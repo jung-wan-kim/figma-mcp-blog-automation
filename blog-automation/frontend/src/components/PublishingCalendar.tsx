@@ -183,15 +183,19 @@ export default function PublishingCalendar() {
         </div>
 
         {/* 범례 */}
-        <div className="flex items-center justify-end text-xs text-gray-500 mt-3 max-w-4xl w-full">
-          <span className="mr-2">적음</span>
-          <div className="flex space-x-1">
-            <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
-            <div className="w-3 h-3 bg-green-200 rounded-sm"></div>
-            <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
-            <div className="w-3 h-3 bg-green-600 rounded-sm"></div>
+        <div className="flex items-center text-xs text-gray-500 mt-3 max-w-4xl w-full">
+          <div className="w-8"></div>
+          <div className="flex-1"></div>
+          <div className="flex items-center">
+            <span className="mr-2">적음</span>
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-200 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-600 rounded-sm"></div>
+            </div>
+            <span className="ml-2">많음</span>
           </div>
-          <span className="ml-2">많음</span>
         </div>
       </div>
     </div>
