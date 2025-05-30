@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     celery_result_backend: str
     
     # AI APIs
-    openai_api_key: str
+    openai_api_key: Optional[str] = None
     claude_api_key: str
     
     # Encryption
