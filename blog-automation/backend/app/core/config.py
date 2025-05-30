@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     # AI APIs
     openai_api_key: Optional[str] = None
     claude_api_key: str
+    claude_model: str = "claude-3-5-sonnet-20241022"
+    claude_max_tokens: int = 4000
     
     # Image APIs
     unsplash_access_key: Optional[str] = None
