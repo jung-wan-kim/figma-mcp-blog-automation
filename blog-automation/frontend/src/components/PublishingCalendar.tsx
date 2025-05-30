@@ -127,7 +127,7 @@ export default function PublishingCalendar() {
 
       <div className="space-y-3">
         {/* 월 라벨 */}
-        <div className="flex text-xs text-gray-500 mb-2">
+        <div className="flex text-[10px] text-gray-500 mb-2">
           <div className="w-8"></div>
           {getMonthLabels().map((month, index) => (
             <div
@@ -143,7 +143,7 @@ export default function PublishingCalendar() {
         {/* 캘린더 그리드 */}
         <div className="flex">
           {/* 요일 라벨 */}
-          <div className="flex flex-col text-xs text-gray-500 mr-2">
+          <div className="flex flex-col text-[10px] text-gray-500 mr-2">
             {getWeekDays().map((day, index) => (
               <div key={index} className="h-3 w-8 flex items-center">
                 {day}

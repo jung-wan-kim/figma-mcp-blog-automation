@@ -361,11 +361,11 @@ async def get_publishing_activity():
         from datetime import datetime, timedelta
         from collections import defaultdict
         
-        # 6개월 범위: 현재 날짜에서 6개월 전까지
+        # 12개월 범위: 현재 날짜가 오른쪽 끝에 오도록
         today = datetime.now().date()
         
-        # 6개월 전 계산 (대략 26주)
-        start_date = today - timedelta(days=26 * 7)  # 26주 전
+        # 12개월 전 계산 (대략 52주)
+        start_date = today - timedelta(days=52 * 7)  # 52주 전
         end_date = today
         
         # 날짜별 발행 수 집계
