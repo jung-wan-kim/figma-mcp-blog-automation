@@ -43,7 +43,8 @@ export default function PlatformsPage() {
     setModalOpen(true);
   };
 
-  const getPlatformIcon = (type: string) => {
+  const getPlatformIcon = (type: string | undefined) => {
+    if (!type) return '📝';
     switch (type.toLowerCase()) {
       case 'tistory':
         return '🟠';
@@ -56,7 +57,8 @@ export default function PlatformsPage() {
     }
   };
 
-  const getPlatformColor = (type: string) => {
+  const getPlatformColor = (type: string | undefined) => {
+    if (!type) return 'bg-gray-50 border-gray-200';
     switch (type.toLowerCase()) {
       case 'tistory':
         return 'bg-orange-50 border-orange-200';
@@ -155,14 +157,18 @@ export default function PlatformsPage() {
               {platforms.map((platform, index) => (
                 <div
                   key={index}
-                  className={`bg-white shadow-sm rounded-lg border-2 p-6 hover:shadow-md transition-shadow ${getPlatformColor(platform.type)}`}
+                  className={`bg-white shadow-sm rounded-lg border-2 p-6 hover:shadow-md transition-shadow ${getPlatformColor(platform.type || platform.platform_type)}`}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="text-3xl">{getPlatformIcon(platform.type)}</div>
+                      <div className="text-3xl">
+                        {getPlatformIcon(platform.type || platform.platform_type)}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{platform.name}</h3>
-                        <p className="text-sm text-gray-500 capitalize">{platform.type}</p>
+                        <p className="text-sm text-gray-500 capitalize">
+                          {platform.type || platform.platform_type}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
