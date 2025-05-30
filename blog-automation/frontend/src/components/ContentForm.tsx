@@ -138,55 +138,60 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
           </div>
         </div>
 
-        {/* 콘텐츠 유형 */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">콘텐츠 유형</label>
-          <select
-            value={formData.content_type}
-            onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
-            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
-          >
-            <option value="blog_post">블로그 포스트</option>
-            <option value="guide">가이드</option>
-            <option value="tutorial">튜토리얼</option>
-            <option value="review">리뷰</option>
-            <option value="news">뉴스</option>
-          </select>
-        </div>
+        {/* 콘텐츠 설정 - 한 줄 정렬 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 콘텐츠 유형 */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">콘텐츠 유형</label>
+            <select
+              value={formData.content_type}
+              onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+              style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
+            >
+              <option value="blog_post">블로그 포스트</option>
+              <option value="guide">가이드</option>
+              <option value="tutorial">튜토리얼</option>
+              <option value="review">리뷰</option>
+              <option value="news">뉴스</option>
+            </select>
+          </div>
 
-        {/* 글 길이 */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">목표 글 길이</label>
-          <select
-            value={formData.target_length}
-            onChange={(e) => setFormData({ ...formData, target_length: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
-            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
-          >
-            <option value={1000}>짧은 글 (1,000자)</option>
-            <option value={1500}>보통 글 (1,500자)</option>
-            <option value={2000}>긴 글 (2,000자)</option>
-            <option value={3000}>상세한 글 (3,000자)</option>
-            <option value={4000}>심층 분석 (4,000자)</option>
-            <option value={5000}>완전한 가이드 (5,000자)</option>
-          </select>
-        </div>
+          {/* 글 길이 */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">목표 글 길이</label>
+            <select
+              value={formData.target_length}
+              onChange={(e) =>
+                setFormData({ ...formData, target_length: parseInt(e.target.value) })
+              }
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+              style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
+            >
+              <option value={1000}>짧은 글 (1,000자)</option>
+              <option value={1500}>보통 글 (1,500자)</option>
+              <option value={2000}>긴 글 (2,000자)</option>
+              <option value={3000}>상세한 글 (3,000자)</option>
+              <option value={4000}>심층 분석 (4,000자)</option>
+              <option value={5000}>완전한 가이드 (5,000자)</option>
+            </select>
+          </div>
 
-        {/* 톤앤매너 */}
-        <div>
-          <label className="block text-sm font-medium text-black mb-2">톤앤매너</label>
-          <select
-            value={formData.tone}
-            onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
-            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
-          >
-            <option value="친근하고 전문적인">친근하고 전문적인</option>
-            <option value="정중하고 격식있는">정중하고 격식있는</option>
-            <option value="캐주얼하고 재미있는">캐주얼하고 재미있는</option>
-            <option value="전문적이고 상세한">전문적이고 상세한</option>
-          </select>
+          {/* 톤앤매너 */}
+          <div>
+            <label className="block text-sm font-medium text-black mb-2">톤앤매너</label>
+            <select
+              value={formData.tone}
+              onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
+              className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+              style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
+            >
+              <option value="친근하고 전문적인">친근하고 전문적인</option>
+              <option value="정중하고 격식있는">정중하고 격식있는</option>
+              <option value="캐주얼하고 재미있는">캐주얼하고 재미있는</option>
+              <option value="전문적이고 상세한">전문적이고 상세한</option>
+            </select>
+          </div>
         </div>
 
         {/* 블로그 플랫폼 선택 */}
