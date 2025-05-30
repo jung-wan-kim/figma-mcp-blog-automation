@@ -1,6 +1,7 @@
 export interface BlogPlatform {
   name: string;
-  type: string;
+  type?: string; // Frontend expects 'type'
+  platform_type?: string; // Backend sends 'platform_type'
   url: string;
   post_count: number;
   total_views?: number;

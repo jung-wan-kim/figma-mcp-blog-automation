@@ -7,7 +7,8 @@ interface PlatformListProps {
 }
 
 export default function PlatformList({ platforms }: PlatformListProps) {
-  const getPlatformIcon = (type: string) => {
+  const getPlatformIcon = (type: string | undefined) => {
+    if (!type) return '📝';
     switch (type.toLowerCase()) {
       case 'tistory':
         return '🟠';
@@ -44,11 +45,13 @@ export default function PlatformList({ platforms }: PlatformListProps) {
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="text-2xl">{getPlatformIcon(platform.type)}</div>
+                  <div className="text-2xl">
+                    {getPlatformIcon(platform.type || platform.platform_type)}
+                  </div>
                   <div>
                     <h4 className="font-medium text-gray-900">{platform.name}</h4>
                     <p className="text-sm text-gray-500">
-                      {platform.type} • {platform.url}
+                      {platform.type || platform.platform_type} • {platform.url}
                     </p>
                   </div>
                 </div>
