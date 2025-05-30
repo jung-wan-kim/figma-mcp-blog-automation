@@ -185,8 +185,12 @@ export default function PublishingCalendar() {
         {/* 범례 */}
         <div className="flex items-center text-xs text-gray-500 mt-3 max-w-4xl w-full">
           <div className="w-8"></div>
-          <div className="flex-1"></div>
-          <div className="flex items-center">
+          <div
+            className="flex items-center justify-end"
+            style={{
+              width: `${53 * 12 + 52 * 2}px`, // 53주 × 12px(잔디) + 52개 × 2px(gap)
+            }}
+          >
             <span className="mr-2">적음</span>
             <div className="flex space-x-1">
               <div className="w-3 h-3 bg-gray-100 rounded-sm"></div>
