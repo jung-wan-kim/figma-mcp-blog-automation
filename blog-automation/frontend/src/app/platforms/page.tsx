@@ -114,21 +114,10 @@ export default function PlatformsPage() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">🌐 플랫폼 관리</h1>
-          <p className="mt-2 text-gray-600">
-            연결된 블로그 플랫폼을 관리하고 발행 현황을 확인하세요
-          </p>
-        </div>
-
         {platforms.length === 0 ? (
           <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-12">
             <div className="text-center">
               <div className="text-6xl mb-4">🌐</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">연결된 플랫폼이 없습니다</h3>
-              <p className="text-gray-500 mb-6">
-                블로그 플랫폼을 연결하여 자동 발행을 시작해보세요
-              </p>
               <div className="flex justify-center space-x-4">
                 <button
                   onClick={() => openModal('tistory')}
@@ -177,42 +166,19 @@ export default function PlatformsPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700">URL</label>
-                      <a
-                        href={platform.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block text-sm text-blue-600 hover:text-blue-800 truncate"
-                      >
-                        {platform.url}
-                      </a>
-                    </div>
+                  <div className="space-y-2">
+                    <a
+                      href={platform.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm text-blue-600 hover:text-blue-800 truncate"
+                    >
+                      {platform.url}
+                    </a>
 
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">총 조회수:</span>
-                      <span className="font-medium">
-                        {(platform.total_views || 0).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">총 좋아요:</span>
-                      <span className="font-medium">
-                        {(platform.total_likes || 0).toLocaleString()}
-                      </span>
-                    </div>
-
-                    <div className="pt-3 border-t border-gray-200">
-                      <div className="flex space-x-2">
-                        <button className="flex-1 px-3 py-2 bg-blue-50 text-blue-700 rounded text-sm hover:bg-blue-100">
-                          설정
-                        </button>
-                        <button className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 rounded text-sm hover:bg-gray-100">
-                          통계
-                        </button>
-                      </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>조회 {(platform.total_views || 0).toLocaleString()}</span>
+                      <span>좋아요 {(platform.total_likes || 0).toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -220,7 +186,6 @@ export default function PlatformsPage() {
             </div>
 
             <div className="mt-8 bg-white shadow-sm rounded-lg border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">새 플랫폼 추가</h3>
               <div className="flex flex-wrap gap-3">
                 <button
                   onClick={() => openModal('tistory')}

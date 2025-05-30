@@ -5,6 +5,7 @@ import { DashboardStats } from '@/types';
 import StatsCards from '@/components/StatsCards';
 import PlatformList from '@/components/PlatformList';
 import RecentPosts from '@/components/RecentPosts';
+import PublishingCalendar from '@/components/PublishingCalendar';
 import Navbar from '@/components/Navbar';
 
 export default function Dashboard() {
@@ -74,15 +75,11 @@ export default function Dashboard() {
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">🤖 AI 블로그 자동화 대시보드</h1>
-          <p className="mt-2 text-gray-600">
-            콘텐츠 생성부터 발행까지 모든 과정을 한눈에 관리하세요
-          </p>
-        </div>
-
         {stats && (
           <div className="space-y-8">
+            {/* 발행 활동 캘린더 */}
+            <PublishingCalendar />
+
             {/* 통계 카드 */}
             <StatsCards stats={stats} />
 
