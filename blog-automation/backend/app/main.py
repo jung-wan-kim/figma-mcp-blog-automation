@@ -4,8 +4,8 @@ from contextlib import asynccontextmanager
 import structlog
 
 from app.core.config import settings
-from app.api import auth, users, contents, blog_accounts, publications, analytics
-from app.core.database import engine, Base
+# from app.api import auth, users, contents, blog_accounts, publications, analytics
+from app.core.database import supabase_client
 
 
 # Configure structured logging
@@ -33,9 +33,12 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up Blog Automation System")
     
-    # Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Test Supabase connection
+    try:
+        result = supabase_client.table('blog_platforms').select("*").limit(1).execute()
+        logger.info(f"Supabase connection successful, found {len(result.data)} blog platforms")
+    except Exception as e:
+        logger.error(f"Supabase connection failed: {e}")
     
     yield
     
@@ -61,13 +64,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router, prefix=f"{settings.api_prefix}/auth", tags=["auth"])
-app.include_router(users.router, prefix=f"{settings.api_prefix}/users", tags=["users"])
-app.include_router(contents.router, prefix=f"{settings.api_prefix}/contents", tags=["contents"])
-app.include_router(blog_accounts.router, prefix=f"{settings.api_prefix}/blog-accounts", tags=["blog-accounts"])
-app.include_router(publications.router, prefix=f"{settings.api_prefix}/publications", tags=["publications"])
-app.include_router(analytics.router, prefix=f"{settings.api_prefix}/analytics", tags=["analytics"])
+# Include routers (Temporarily disabled - need to update to Supabase)
+# TODO: Update these routers to use Supabase instead of SQLAlchemy
+# app.include_router(auth.router, prefix=f"{settings.api_prefix}/auth", tags=["auth"])
+# app.include_router(users.router, prefix=f"{settings.api_prefix}/users", tags=["users"])
+# app.include_router(contents.router, prefix=f"{settings.api_prefix}/contents", tags=["contents"])
+# app.include_router(blog_accounts.router, prefix=f"{settings.api_prefix}/blog-accounts", tags=["blog-accounts"])
+# app.include_router(publications.router, prefix=f"{settings.api_prefix}/publications", tags=["publications"])
+# app.include_router(analytics.router, prefix=f"{settings.api_prefix}/analytics", tags=["analytics"])
 
 
 @app.get("/")
@@ -77,4 +81,17 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    try:
+        # Check Supabase connection
+        result = supabase_client.table('blog_platforms').select("count").execute()
+        return {
+            "status": "healthy",
+            "supabase": "connected",
+            "database": "ready"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "supabase": "error",
+            "error": str(e)
+        }

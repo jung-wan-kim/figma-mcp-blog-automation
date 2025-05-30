@@ -1,31 +1,21 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.pool import NullPool
+"""
+Supabase 데이터베이스 연결 설정
+SQLAlchemy 대신 Supabase Python 클라이언트 사용
+"""
 
+from supabase import create_client, Client
 from app.core.config import settings
+from app.core.supabase import get_supabase_client
 
-# Create async engine
-engine = create_async_engine(
-    settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
-    echo=settings.debug,
-    poolclass=NullPool,
-)
+# Supabase 클라이언트 가져오기
+supabase_client = get_supabase_client()
 
-# Create async session factory
-AsyncSessionLocal = sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+# 기존 코드 호환성을 위한 함수
+async def get_db() -> Client:
+    """Supabase 클라이언트를 반환합니다."""
+    return supabase_client
 
-# Create declarative base
-Base = declarative_base()
-
-
-# Dependency to get DB session
-async def get_db() -> AsyncSession:
-    async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+# SQLAlchemy Base 대체 (필요한 경우)
+class Base:
+    """SQLAlchemy Base 대체 클래스"""
+    pass

@@ -10,8 +10,12 @@ class Settings(BaseSettings):
     secret_key: str
     api_prefix: str = "/api/v1"
     
-    # Database
-    database_url: str
+    # Database (Deprecated - Using Supabase instead)
+    database_url: Optional[str] = None
+    
+    # Supabase
+    supabase_url: Optional[str] = None
+    supabase_key: Optional[str] = None
     
     # Redis
     redis_url: str

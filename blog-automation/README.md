@@ -140,14 +140,12 @@ pip install -r requirements.txt
 ### 2. 데이터베이스 설정
 
 ```bash
-# PostgreSQL 실행 (Docker)
-docker run -d --name blog-postgres \
-  -e POSTGRES_DB=blog_automation \
-  -e POSTGRES_USER=bloguser \
-  -e POSTGRES_PASSWORD=blogpass \
-  -p 5432:5432 postgres:15
+# Supabase 설정
+# 1. https://supabase.com 에서 프로젝트 생성
+# 2. SQL Editor에서 스키마 실행 (SUPABASE_COMPLETE_SCHEMA.sql)
+# 3. .env 파일에 SUPABASE_URL과 SUPABASE_KEY 설정
 
-# Redis 실행 (Docker)
+# Redis 실행 (Docker) - 캐싱과 Celery용
 docker run -d --name blog-redis -p 6379:6379 redis:7-alpine
 ```
 

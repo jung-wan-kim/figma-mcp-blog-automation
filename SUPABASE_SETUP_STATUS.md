@@ -33,13 +33,11 @@
 - ✅ SECRET_KEY
 - ✅ ENCRYPTION_KEY
 
-### 3. 데이터베이스 URL 업데이트
-현재 `DATABASE_URL`이 로컬 PostgreSQL을 가리키고 있습니다.
-Supabase를 사용하려면 다음과 같이 변경이 필요할 수 있습니다:
-
-```
-DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.eupjjwgxrzxmddnumxyd.supabase.co:5432/postgres
-```
+### 3. 데이터베이스 설정
+프로젝트는 이제 Supabase Python 클라이언트를 직접 사용합니다.
+- ✅ DATABASE_URL 설정 불필요 (제거됨)
+- ✅ SUPABASE_URL과 SUPABASE_KEY만 필요
+- ✅ PostgreSQL 드라이버 의존성 제거됨
 
 ## 다음 단계
 1. SQL 스키마 실행

@@ -281,7 +281,7 @@ npm run dev
 | **Frontend** | Next.js 14, React 18, TypeScript |
 | **Styling**  | Tailwind CSS, PostCSS            |
 | **Backend**  | Node.js, MCP Protocol            |
-| **Database** | Supabase (PostgreSQL)            |
+| **Database** | Supabase (Backend-as-a-Service) |
 | **DevOps**   | GitHub Actions, Vercel           |
 | **Design**   | Figma API, Design Tokens         |
 
@@ -292,7 +292,7 @@ npm run dev
 | **AI**         | Claude 3.5 Sonnet, Anthropic API       |
 | **Backend**    | FastAPI, Python 3.11, Pydantic         |
 | **Frontend**   | Next.js 14, TypeScript, Tailwind CSS   |
-| **Database**   | SQLite (테스트), PostgreSQL (프로덕션) |
+| **Database**   | Supabase (모든 환경)                   |
 | **Images**     | Unsplash API, 자동 이미지 선택         |
 | **Publishing** | WordPress, Tistory, Naver Blog API     |
 | **Container**  | Docker, Docker Compose                 |

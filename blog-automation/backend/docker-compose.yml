@@ -6,27 +6,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://bloguser:blogpass@db:5432/blog_automation
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
       - REDIS_URL=redis://redis:6379
       - CELERY_BROKER_URL=redis://redis:6379
       - CELERY_RESULT_BACKEND=redis://redis:6379
     depends_on:
-      - db
       - redis
     volumes:
       - ./:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: blog_automation
-      POSTGRES_USER: bloguser
-      POSTGRES_PASSWORD: blogpass
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
 
   redis:
     image: redis:7-alpine
@@ -39,12 +28,12 @@ services:
     build: .
     command: celery -A app.celery_app worker --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://bloguser:blogpass@db:5432/blog_automation
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
       - REDIS_URL=redis://redis:6379
       - CELERY_BROKER_URL=redis://redis:6379
       - CELERY_RESULT_BACKEND=redis://redis:6379
     depends_on:
-      - db
       - redis
     volumes:
       - ./:/app
@@ -53,12 +42,12 @@ services:
     build: .
     command: celery -A app.celery_app beat --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://bloguser:blogpass@db:5432/blog_automation
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
       - REDIS_URL=redis://redis:6379
       - CELERY_BROKER_URL=redis://redis:6379
       - CELERY_RESULT_BACKEND=redis://redis:6379
     depends_on:
-      - db
       - redis
     volumes:
       - ./:/app
@@ -77,5 +66,4 @@ services:
       - ./:/app
 
 volumes:
-  postgres_data:
   redis_data:
