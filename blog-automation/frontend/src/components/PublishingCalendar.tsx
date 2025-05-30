@@ -188,7 +188,7 @@ export default function PublishingCalendar() {
           <div
             className="flex items-center justify-end"
             style={{
-              width: `${53 * 12 + 52 * 2 + 42}px`, // 53주 × 12px(잔디) + 52개 × 2px(gap) + 42px(3개 잔디만큼 오른쪽)
+              width: `${53 * 12 + 52 * 2 + 56}px`, // 53주 × 12px(잔디) + 52개 × 2px(gap) + 56px(4개 잔디만큼 오른쪽)
             }}
           >
             <span className="mr-2">적음</span>
