@@ -70,8 +70,8 @@ export default function PublishingCalendar() {
     const months: { label: string; week: number }[] = [];
     let currentMonth = -1;
 
-    // 26주 동안 주별로 확인
-    for (let weekIndex = 0; weekIndex < 26; weekIndex++) {
+    // 52주 동안 주별로 확인
+    for (let weekIndex = 0; weekIndex < 52; weekIndex++) {
       const startOfWeekIndex = weekIndex * 7;
       if (startOfWeekIndex >= yearData.length) break;
 
@@ -154,7 +154,7 @@ export default function PublishingCalendar() {
           {/* 활동 그리드 */}
           <div style={{ width: 'calc(100% - 40px)' }}>
             <div className="flex gap-1">
-              {Array.from({ length: 26 }, (_, weekIndex) => (
+              {Array.from({ length: 52 }, (_, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-1">
                   {Array.from({ length: 7 }, (_, dayIndex) => {
                     const activityIndex = weekIndex * 7 + dayIndex;
