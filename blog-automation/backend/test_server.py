@@ -12,7 +12,7 @@ from anthropic import Anthropic
 import os
 from dotenv import load_dotenv
 import aiohttp
-from app.core.supabase import get_supabase_client
+# from app.core.supabase import get_supabase_client  # 임시 비활성화
 
 # 환경 변수 로드
 load_dotenv()
@@ -185,7 +185,7 @@ async def test_generate_content(request: ContentRequest):
         raise HTTPException(status_code=500, detail=f"콘텐츠 생성 실패: {str(e)}")
 
 async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
-    """Unsplash API를 사용한 키워드 기반 이미지 검색"""
+    """Unsplash API를 사용한 키워드 기반 이미지 검색 (retry 로직 포함)"""
     
     # Unsplash API 설정
     unsplash_access_key = os.getenv("UNSPLASH_ACCESS_KEY")
@@ -196,80 +196,108 @@ async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
     
     print(f"Unsplash API 키 확인됨: {unsplash_access_key[:10]}...")
     
-    try:
-        # 한국어 키워드를 영어로 간단 변환
-        query_en = query
-        korean_to_english = {
-            "AI": "artificial intelligence",
-            "인공지능": "artificial intelligence",
-            "기술": "technology",
-            "프로그래밍": "programming",
-            "개발": "development",
-            "소프트웨어": "software",
-            "컴퓨터": "computer",
-            "데이터": "data",
-            "빅데이터": "big data",
-            "머신러닝": "machine learning",
-            "딥러닝": "deep learning",
-            "웹": "web",
-            "앱": "app",
-            "모바일": "mobile",
-            "클라우드": "cloud"
+    # Retry 설정
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            print(f"Unsplash API 시도 {attempt + 1}/{max_retries}")
+            return await _search_images_single_attempt(query, count, unsplash_access_key)
+        except Exception as e:
+            print(f"시도 {attempt + 1} 실패: {str(e)}")
+            if attempt == max_retries - 1:  # 마지막 시도
+                print("모든 재시도 실패 - 백업 이미지 사용")
+                return await search_images_fallback(query, count)
+            await asyncio.sleep(1)  # 1초 대기 후 재시도
+
+async def _search_images_single_attempt(query: str, count: int, unsplash_access_key: str) -> List[ImageInfo]:
+    """단일 Unsplash API 호출 시도"""
+    # 한국어 키워드를 영어로 간단 변환
+    query_en = query
+    korean_to_english = {
+        "AI": "artificial intelligence",
+        "인공지능": "artificial intelligence",
+        "기술": "technology",
+        "프로그래밍": "programming",
+        "개발": "development",
+        "소프트웨어": "software",
+        "컴퓨터": "computer",
+        "데이터": "data",
+        "빅데이터": "big data",
+        "머신러닝": "machine learning",
+        "딥러닝": "deep learning",
+        "웹": "web",
+        "앱": "app",
+        "모바일": "mobile",
+        "클라우드": "cloud"
+    }
+    
+    for ko, en in korean_to_english.items():
+        if ko in query:
+            query_en = query.replace(ko, en)
+            break
+    
+    print(f"검색 쿼리 변환: '{query}' -> '{query_en}'")
+    
+    # 타임아웃 설정 - 연결 및 읽기 타임아웃 분리
+    timeout = aiohttp.ClientTimeout(total=10, connect=3)
+    connector = aiohttp.TCPConnector(
+        ssl=False,  # SSL 검증 비활성화 (개발용)
+        limit=10,
+        force_close=True,
+        enable_cleanup_closed=True
+    )
+    
+    async with aiohttp.ClientSession(timeout=timeout, connector=connector) as session:
+        url = "https://api.unsplash.com/search/photos"
+        # Client-ID 방식으로 변경 (공식 문서 권장)
+        params = {
+            "client_id": unsplash_access_key,
+            "query": query_en,
+            "per_page": count,
+            "orientation": "landscape",
+            "content_filter": "high",
+            "order_by": "relevant"
         }
         
-        for ko, en in korean_to_english.items():
-            if ko in query:
-                query_en = query.replace(ko, en)
-                break
+        print(f"Unsplash API 호출: query='{query_en}', count={count}")
         
-        print(f"검색 쿼리 변환: '{query}' -> '{query_en}'")
-        
-        # 타임아웃 설정 추가
-        timeout = aiohttp.ClientTimeout(total=5)  # 5초 타임아웃으로 단축
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            url = "https://api.unsplash.com/search/photos"
-            headers = {
-                "Authorization": f"Client-ID {unsplash_access_key}"
-            }
-            params = {
-                "query": query_en,
-                "per_page": count,
-                "orientation": "landscape",
-                "content_filter": "high",
-                "order_by": "relevant"
-            }
+        async with session.get(url, params=params) as response:
+            # Rate limit 정보 확인
+            remaining = response.headers.get('X-Ratelimit-Remaining', 'Unknown')
+            limit = response.headers.get('X-Ratelimit-Limit', 'Unknown')
+            print(f"Unsplash API Rate Limit: {remaining}/{limit}")
             
-            print(f"Unsplash API 호출: query='{query_en}', count={count}")
-            
-            async with session.get(url, headers=headers, params=params) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    images = []
-                    
-                    for image in data.get("results", []):
-                        images.append(ImageInfo(
-                            id=image["id"],
-                            url=image["urls"]["regular"],
-                            thumb_url=image["urls"]["thumb"],
-                            alt_text=image.get("alt_description", f"{query} 관련 이미지") or f"{query} 관련 이미지",
-                            attribution={
-                                "photographer": image["user"]["name"],
-                                "source": "Unsplash",
-                                "source_url": image["links"]["html"]
-                            },
-                            width=image["width"],
-                            height=image["height"]
-                        ))
-                    
-                    print(f"Unsplash API 성공: {len(images)}개 이미지 반환")
-                    return images if images else await search_images_fallback(query, count)
-                else:
-                    print(f"Unsplash API 오류: {response.status}")
-                    return await search_images_fallback(query, count)
-    
-    except Exception as e:
-        print(f"Unsplash API 호출 실패: {str(e)}")
-        return await search_images_fallback(query, count)
+            if response.status == 200:
+                data = await response.json()
+                images = []
+                
+                for image in data.get("results", []):
+                    images.append(ImageInfo(
+                        id=image["id"],
+                        url=image["urls"]["regular"],
+                        thumb_url=image["urls"]["thumb"],
+                        alt_text=image.get("alt_description", f"{query} 관련 이미지") or f"{query} 관련 이미지",
+                        attribution={
+                            "photographer": image["user"]["name"],
+                            "source": "Unsplash",
+                            "source_url": image["links"]["html"]
+                        },
+                        width=image["width"],
+                        height=image["height"]
+                    ))
+                
+                print(f"Unsplash API 성공: {len(images)}개 이미지 반환")
+                return images if images else await search_images_fallback(query, count)
+            elif response.status == 403:
+                print("Unsplash API 권한 오류 - API 키 확인 필요")
+                raise Exception("API 키 권한 오류")
+            elif response.status == 429:
+                print("Unsplash API Rate Limit 초과")
+                raise Exception("Rate limit 초과")
+            else:
+                error_text = await response.text()
+                print(f"Unsplash API 오류: {response.status} - {error_text}")
+                raise Exception(f"HTTP {response.status}: {error_text}")
 
 async def search_images_fallback(query: str, count: int = 3) -> List[ImageInfo]:
     """Unsplash API 실패 시 Lorem Picsum을 사용한 백업 이미지 검색"""
@@ -321,7 +349,7 @@ async def test_claude_connection():
         }
 
 # Supabase 클라이언트 초기화
-supabase = get_supabase_client()
+# supabase = get_supabase_client()  # 임시 비활성화
 
 # 임시 발행 내역 저장소 (실제로는 데이터베이스 사용)
 published_posts = []
