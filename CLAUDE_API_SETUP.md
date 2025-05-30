@@ -17,15 +17,21 @@ CLAUDE_API_KEY=sk-ant-api03-여기에실제API키입력
 # OPENAI_API_KEY=your-openai-api-key  # 선택사항 - GPT-4 사용시에만 필요
 
 # Claude API Settings
-CLAUDE_MODEL=claude-3-5-sonnet-20241022
-CLAUDE_MAX_TOKENS=4000
+CLAUDE_MODEL=claude-3-7-sonnet-20250219
+CLAUDE_MAX_TOKENS=128000
 ```
 
 ## 3. 사용 가능한 Claude 모델
 
-- `claude-3-5-sonnet-20241022` (권장): 최신 Claude 3.5 Sonnet
+- `claude-3-7-sonnet-20250219` (권장): 최신 Claude 3.7 Sonnet (하이브리드 추론 모델)
+- `claude-3-5-sonnet-20241022`: Claude 3.5 Sonnet
 - `claude-3-5-haiku-20241022`: 빠르고 효율적인 모델
 - `claude-3-opus-20240229`: 가장 강력한 모델 (비용 높음)
+
+### Claude 3.7 Sonnet 특징
+- **하이브리드 추론**: 즉시 응답 또는 단계별 사고 모드 지원
+- **128K 토큰 출력**: 더 긴 콘텐츠 생성 가능
+- **향상된 성능**: 더 깊이 있고 논리적인 콘텐츠 생성
 
 ## 4. API 사용량 및 비용
 
