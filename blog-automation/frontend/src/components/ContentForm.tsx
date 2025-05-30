@@ -111,7 +111,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" style={{ color: '#000000' }}>
         {/* 키워드 입력 */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">키워드 *</label>
@@ -123,7 +123,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleKeywordAdd())}
               placeholder="키워드를 입력하세요"
               className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-              style={{ color: '#111827', backgroundColor: '#ffffff' }}
+              style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
             />
             <button
               type="button"
@@ -161,6 +161,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             value={formData.content_type}
             onChange={(e) => setFormData({ ...formData, content_type: e.target.value })}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value="blog_post">블로그 포스트</option>
             <option value="guide">가이드</option>
@@ -177,6 +178,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             value={formData.target_length}
             onChange={(e) => setFormData({ ...formData, target_length: parseInt(e.target.value) })}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value={1000}>짧은 글 (1,000자)</option>
             <option value={1500}>보통 글 (1,500자)</option>
@@ -194,6 +196,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
             value={formData.tone}
             onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
             className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
           >
             <option value="친근하고 전문적인">친근하고 전문적인</option>
             <option value="정중하고 격식있는">정중하고 격식있는</option>
@@ -219,6 +222,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
                 value={platforms.find((p) => p.url === formData.blog_platform.url)?.id || ''}
                 onChange={(e) => handlePlatformSelect(e.target.value)}
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
               >
                 <option value="">플랫폼을 선택하세요</option>
                 {platforms.map((platform) => (
