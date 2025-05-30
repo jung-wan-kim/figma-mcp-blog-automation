@@ -134,18 +134,15 @@ export default function PublishingCalendar() {
         {/* 월 라벨 */}
         <div className="flex text-[10px] text-gray-500 mb-2 max-w-4xl">
           <div className="w-8"></div>
-          <div className="relative flex" style={{ width: 'calc(100% - 40px)' }}>
-            {getMonthLabels().map((month, index) => (
-              <div
-                key={index}
-                className="absolute text-left"
-                style={{
-                  left: `${month.week * 14}px`, // 잔디 너비(12px) + gap(2px) = 14px
-                }}
-              >
-                {month.label}
-              </div>
-            ))}
+          <div className="flex gap-[2px]" style={{ width: 'calc(100% - 40px)' }}>
+            {Array.from({ length: 53 }, (_, weekIndex) => {
+              const monthLabel = getMonthLabels().find((m) => m.week === weekIndex);
+              return (
+                <div key={weekIndex} className="w-3 text-center">
+                  {monthLabel ? monthLabel.label : ''}
+                </div>
+              );
+            })}
           </div>
         </div>
 
