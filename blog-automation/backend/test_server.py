@@ -361,18 +361,12 @@ async def get_publishing_activity():
         from datetime import datetime, timedelta
         from collections import defaultdict
         
-        # GitHub 스타일: 현재 날짜가 마지막 주 일요일에 오도록 계산
+        # 6개월 범위: 현재 날짜에서 6개월 전까지
         today = datetime.now().date()
         
-        # 현재 날짜의 요일 (0=월요일, 6=일요일)
-        today_weekday = today.weekday()
-        
-        # 현재 날짜가 속한 주의 일요일을 찾기
-        days_until_sunday = (6 - today_weekday) % 7
-        end_date = today + timedelta(days=days_until_sunday)
-        
-        # 53주 전의 일요일부터 시작 (총 371일, 53주)
-        start_date = end_date - timedelta(days=52 * 7)
+        # 6개월 전 계산 (대략 26주)
+        start_date = today - timedelta(days=26 * 7)  # 26주 전
+        end_date = today
         
         # 날짜별 발행 수 집계
         activity_by_date = defaultdict(int)
@@ -423,10 +417,8 @@ async def get_publishing_activity():
         print(f"발행 활동 조회 오류: {str(e)}")
         # 오류 시 빈 데이터 반환
         today = datetime.now().date()
-        today_weekday = today.weekday()
-        days_until_sunday = (6 - today_weekday) % 7
-        end_date = today + timedelta(days=days_until_sunday)
-        start_date = end_date - timedelta(days=52 * 7)
+        start_date = today - timedelta(days=26 * 7)
+        end_date = today
         
         return {
             "activities": [],

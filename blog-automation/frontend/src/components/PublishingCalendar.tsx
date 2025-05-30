@@ -64,27 +64,31 @@ export default function PublishingCalendar() {
     return 'bg-green-600';
   };
 
-  const getWeekDays = (): string[] => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const getWeekDays = (): string[] => ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 
   const getMonthLabels = (): { label: string; week: number }[] => {
     const months: { label: string; week: number }[] = [];
     let currentMonth = -1;
-    let weekIndex = 0;
 
-    yearData.forEach((activity, index) => {
+    // 26주 동안 주별로 확인
+    for (let weekIndex = 0; weekIndex < 26; weekIndex++) {
+      const startOfWeekIndex = weekIndex * 7;
+      if (startOfWeekIndex >= yearData.length) break;
+
+      const activity = yearData[startOfWeekIndex];
+      if (!activity) continue;
+
       const date = new Date(activity.date);
       const month = date.getMonth();
 
-      if (index % 7 === 0) weekIndex = Math.floor(index / 7);
-
-      if (month !== currentMonth && date.getDate() <= 7) {
+      if (month !== currentMonth) {
         currentMonth = month;
         months.push({
           label: date.toLocaleDateString('en-US', { month: 'short' }),
           week: weekIndex,
         });
       }
-    });
+    }
 
     return months;
   };
@@ -142,7 +146,7 @@ export default function PublishingCalendar() {
           <div className="flex flex-col text-xs text-gray-500 mr-2">
             {getWeekDays().map((day, index) => (
               <div key={index} className="h-3 w-8 flex items-center">
-                {index % 2 === 0 ? day : ''}
+                {day}
               </div>
             ))}
           </div>
@@ -150,7 +154,7 @@ export default function PublishingCalendar() {
           {/* 활동 그리드 */}
           <div style={{ width: 'calc(100% - 40px)' }}>
             <div className="flex gap-1">
-              {Array.from({ length: 53 }, (_, weekIndex) => (
+              {Array.from({ length: 26 }, (_, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-1">
                   {Array.from({ length: 7 }, (_, dayIndex) => {
                     const activityIndex = weekIndex * 7 + dayIndex;
