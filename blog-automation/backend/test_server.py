@@ -5,11 +5,12 @@
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import asyncio
 from anthropic import Anthropic
 import os
 from dotenv import load_dotenv
+import aiohttp
 
 # 환경 변수 로드
 load_dotenv()
@@ -26,8 +27,17 @@ claude_client = Anthropic(api_key=os.getenv("CLAUDE_API_KEY"))
 class ContentRequest(BaseModel):
     keywords: List[str]
     content_type: str = "blog_post"
-    target_length: int = 1500
+    target_length: int = 3000  # 기본 3000자로 변경
     tone: Optional[str] = "친근하고 전문적인"
+
+class ImageInfo(BaseModel):
+    id: str
+    url: str
+    thumb_url: str
+    alt_text: str
+    attribution: Dict[str, str]
+    width: int
+    height: int
 
 class ContentResponse(BaseModel):
     title: str
@@ -35,6 +45,28 @@ class ContentResponse(BaseModel):
     meta_description: str
     word_count: int
     ai_model_used: str = "claude-3-sonnet"
+    featured_image: ImageInfo
+    suggested_images: Dict[str, List[ImageInfo]]
+
+class BlogPlatformInfo(BaseModel):
+    name: str
+    platform_type: str  # wordpress, tistory, naver
+    url: str
+    username: Optional[str] = None
+    is_active: bool = True
+
+class PublishRequest(BaseModel):
+    keywords: List[str]
+    content_type: str = "blog_post"
+    target_length: int = 3000
+    tone: Optional[str] = "친근하고 전문적인"
+    blog_platform: BlogPlatformInfo
+    
+class PublishResponse(BaseModel):
+    content: ContentResponse
+    platform: BlogPlatformInfo
+    status: str
+    published_url: Optional[str] = None
 
 @app.get("/")
 async def root():
@@ -114,6 +146,10 @@ async def test_generate_content(request: ContentRequest):
         if not content_body:
             content_body = content_text
         
+        # 이미지 검색
+        title_images = await search_images(title, count=2)
+        keyword_images = await search_images(" ".join(request.keywords), count=2)
+        
         # 단어 수 계산 (간단한 방식)
         word_count = len(content_body.split())
         
@@ -122,11 +158,46 @@ async def test_generate_content(request: ContentRequest):
             content=content_body.strip(),
             meta_description=meta_description,
             word_count=word_count,
-            ai_model_used="claude-3-sonnet"
+            ai_model_used="claude-3-sonnet",
+            featured_image=title_images[0],
+            suggested_images={
+                "title_based": title_images,
+                "keyword_based": keyword_images
+            }
         )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"콘텐츠 생성 실패: {str(e)}")
+
+async def search_images(query: str, count: int = 3) -> List[ImageInfo]:
+    """이미지 검색 (기본 이미지 반환)"""
+    default_images = [
+        ImageInfo(
+            id="default_1",
+            url="https://via.placeholder.com/800x600/4A90E2/FFFFFF?text=Blog+Image+1",
+            thumb_url="https://via.placeholder.com/300x200/4A90E2/FFFFFF?text=Blog+Image+1",
+            alt_text="블로그 이미지 1",
+            attribution={"photographer": "Placeholder", "source": "Placeholder"},
+            width=800, height=600
+        ),
+        ImageInfo(
+            id="default_2", 
+            url="https://via.placeholder.com/800x600/50C878/FFFFFF?text=Blog+Image+2",
+            thumb_url="https://via.placeholder.com/300x200/50C878/FFFFFF?text=Blog+Image+2",
+            alt_text="블로그 이미지 2",
+            attribution={"photographer": "Placeholder", "source": "Placeholder"},
+            width=800, height=600
+        ),
+        ImageInfo(
+            id="default_3",
+            url="https://via.placeholder.com/800x600/FF6B6B/FFFFFF?text=Blog+Image+3", 
+            thumb_url="https://via.placeholder.com/300x200/FF6B6B/FFFFFF?text=Blog+Image+3",
+            alt_text="블로그 이미지 3",
+            attribution={"photographer": "Placeholder", "source": "Placeholder"},
+            width=800, height=600
+        )
+    ]
+    return default_images[:count]
 
 @app.get("/test/claude")
 async def test_claude_connection():
@@ -154,6 +225,104 @@ async def test_claude_connection():
             "status": "error", 
             "message": f"Claude API 연결 실패: {str(e)}"
         }
+
+# 임시 발행 내역 저장소 (실제로는 데이터베이스 사용)
+published_posts = []
+
+@app.post("/test/publish", response_model=PublishResponse)
+async def test_publish_content(request: PublishRequest):
+    """콘텐츠 생성 및 블로그 발행 시뮬레이션"""
+    
+    try:
+        # 1. 콘텐츠 생성
+        content_request = ContentRequest(
+            keywords=request.keywords,
+            content_type=request.content_type,
+            target_length=request.target_length,
+            tone=request.tone
+        )
+        
+        content_response = await test_generate_content(content_request)
+        
+        # 2. 블로그 발행 시뮬레이션
+        published_url = f"{request.blog_platform.url}/posts/{len(published_posts) + 1}"
+        
+        # 발행 내역 저장
+        published_post = {
+            "id": len(published_posts) + 1,
+            "title": content_response.title,
+            "content": content_response.content,
+            "platform": request.blog_platform.model_dump(),
+            "published_url": published_url,
+            "published_at": "2024-01-01T00:00:00Z",
+            "status": "published",
+            "views": 0,
+            "likes": 0,
+            "comments": 0
+        }
+        published_posts.append(published_post)
+        
+        return PublishResponse(
+            content=content_response,
+            platform=request.blog_platform,
+            status="published",
+            published_url=published_url
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"발행 실패: {str(e)}")
+
+@app.get("/dashboard/stats")
+async def get_dashboard_stats():
+    """대시보드 통계 조회"""
+    
+    total_posts = len(published_posts)
+    platforms = {}
+    
+    for post in published_posts:
+        platform_name = post["platform"]["name"]
+        if platform_name not in platforms:
+            platforms[platform_name] = {
+                "name": platform_name,
+                "type": post["platform"]["platform_type"],
+                "url": post["platform"]["url"],
+                "post_count": 0,
+                "total_views": 0,
+                "total_likes": 0
+            }
+        platforms[platform_name]["post_count"] += 1
+        platforms[platform_name]["total_views"] += post["views"]
+        platforms[platform_name]["total_likes"] += post["likes"]
+    
+    return {
+        "total_posts": total_posts,
+        "platforms": list(platforms.values()),
+        "recent_posts": published_posts[-5:] if published_posts else []
+    }
+
+@app.get("/dashboard/posts")
+async def get_published_posts():
+    """발행된 글 목록 조회"""
+    return {
+        "posts": published_posts,
+        "total": len(published_posts)
+    }
+
+@app.get("/dashboard/platforms")
+async def get_platforms():
+    """등록된 플랫폼 목록"""
+    platforms = []
+    for post in published_posts:
+        platform = post["platform"]
+        if not any(p["url"] == platform["url"] for p in platforms):
+            platforms.append({
+                "name": platform["name"],
+                "type": platform["platform_type"], 
+                "url": platform["url"],
+                "post_count": sum(1 for p in published_posts if p["platform"]["url"] == platform["url"])
+            })
+    
+    return {"platforms": platforms}
 
 if __name__ == "__main__":
     import uvicorn

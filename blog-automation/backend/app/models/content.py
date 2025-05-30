@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, ARRAY
+from sqlalchemy import Column, String, Text, Integer, DateTime, Enum, ForeignKey, ARRAY, JSON
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -42,6 +42,12 @@ class Content(Base):
     style_preset = Column(String(100))  # 브랜드 톤앤매너
     ai_model_used = Column(String(50))  # gpt-4, claude-3.5, etc
     generation_prompt = Column(Text)  # 생성에 사용된 프롬프트 저장
+    
+    # 이미지 정보
+    featured_image_url = Column(String(1000))
+    featured_image_alt = Column(String(200))
+    suggested_images = Column(JSON)  # 제안된 이미지들
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

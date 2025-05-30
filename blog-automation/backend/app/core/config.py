@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = None
     claude_api_key: str
     
+    # Image APIs
+    unsplash_access_key: Optional[str] = None
+    
     # Encryption
     encryption_key: str
     
