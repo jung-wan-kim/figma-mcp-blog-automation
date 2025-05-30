@@ -349,14 +349,20 @@ async def test_claude_connection():
         }
 
 # Supabase 클라이언트 초기화
-# supabase = get_supabase_client()  # 임시 비활성화
+try:
+    from app.core.supabase import get_supabase_client
+    supabase = get_supabase_client()
+    print("✅ Supabase 클라이언트 초기화 성공")
+except Exception as e:
+    print(f"❌ Supabase 클라이언트 초기화 실패: {e}")
+    supabase = None
 
 # 임시 발행 내역 저장소 (실제로는 데이터베이스 사용)
 published_posts = []
 
 @app.get("/dashboard/publishing-activity")
 async def get_publishing_activity():
-    """발행 활동 데이터 반환 (GitHub 잔디 스타일)"""
+    """발행 활동 데이터 반환 (GitHub 잔디 스타일) - Supabase 데이터 사용"""
     try:
         from datetime import datetime, timedelta
         from collections import defaultdict
@@ -372,23 +378,47 @@ async def get_publishing_activity():
         activity_by_date = defaultdict(int)
         posts_by_date = defaultdict(list)
         
-        # published_posts에서 날짜별로 집계
-        for post in published_posts:
+        # Supabase에서 게시물 데이터 가져오기
+        posts_data = []
+        if supabase:
             try:
-                # published_at이 있으면 사용, 없으면 현재 날짜 사용
-                if 'published_at' in post:
-                    if isinstance(post['published_at'], str):
-                        post_date = datetime.fromisoformat(post['published_at'].replace('Z', '+00:00')).date()
+                # 날짜 범위 내의 게시물만 조회
+                response = supabase.table("blog_posts").select("title, created_at, published_at").execute()
+                posts_data = response.data if response.data else []
+                print(f"📊 Supabase에서 {len(posts_data)}개 게시물 조회")
+            except Exception as e:
+                print(f"❌ Supabase 게시물 조회 오류: {e}")
+                # Supabase 실패 시 메모리 데이터 사용
+                posts_data = published_posts
+        else:
+            print("⚠️ Supabase 미연결 - 메모리 데이터 사용")
+            posts_data = published_posts
+        
+        # 게시물 데이터에서 날짜별로 집계
+        for post in posts_data:
+            try:
+                # published_at 또는 created_at 사용
+                post_date_str = post.get('published_at') or post.get('created_at')
+                if post_date_str:
+                    if isinstance(post_date_str, str):
+                        # ISO 형식 날짜 파싱
+                        if 'T' in post_date_str:
+                            post_date = datetime.fromisoformat(post_date_str.replace('Z', '+00:00')).date()
+                        else:
+                            post_date = datetime.fromisoformat(post_date_str).date()
                     else:
-                        post_date = post['published_at'].date()
+                        post_date = post_date_str.date() if hasattr(post_date_str, 'date') else today
                 else:
                     post_date = today
                     
+                # 날짜 범위 확인
                 if start_date <= post_date <= end_date:
-                    activity_by_date[post_date.isoformat()] += 1
-                    posts_by_date[post_date.isoformat()].append(post.get('title', '제목 없음'))
+                    date_key = post_date.isoformat()
+                    activity_by_date[date_key] += 1
+                    posts_by_date[date_key].append(post.get('title', '제목 없음'))
+                    
             except Exception as e:
-                print(f"날짜 파싱 오류: {e}")
+                print(f"❌ 날짜 파싱 오류: {e}, post: {post}")
                 continue
         
         # 모든 날짜에 대해 데이터 생성
@@ -403,10 +433,15 @@ async def get_publishing_activity():
             })
             current_date += timedelta(days=1)
         
+        total_posts = len(posts_data)
+        active_days = len([a for a in activities if a["count"] > 0])
+        
+        print(f"📈 발행 활동 통계: 총 {total_posts}개 포스트, {active_days}일 활성")
+        
         return {
             "activities": activities,
-            "total_posts": len(published_posts),
-            "active_days": len([a for a in activities if a["count"] > 0]),
+            "total_posts": total_posts,
+            "active_days": active_days,
             "date_range": {
                 "start": start_date.isoformat(),
                 "end": end_date.isoformat()
@@ -414,10 +449,10 @@ async def get_publishing_activity():
         }
         
     except Exception as e:
-        print(f"발행 활동 조회 오류: {str(e)}")
+        print(f"❌ 발행 활동 조회 오류: {str(e)}")
         # 오류 시 빈 데이터 반환
         today = datetime.now().date()
-        start_date = today - timedelta(days=26 * 7)
+        start_date = today - timedelta(days=52 * 7)
         end_date = today
         
         return {
