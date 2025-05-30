@@ -129,15 +129,20 @@ export default function PublishingCalendar() {
         {/* 월 라벨 */}
         <div className="flex text-[10px] text-gray-500 mb-2">
           <div className="w-8"></div>
-          {getMonthLabels().map((month, index) => (
-            <div
-              key={index}
-              className="flex-1 text-left"
-              style={{ marginLeft: `${month.week * 12}px` }}
-            >
-              {month.label}
-            </div>
-          ))}
+          <div className="flex" style={{ width: 'calc(100% - 40px)' }}>
+            {getMonthLabels().map((month, index) => (
+              <div
+                key={index}
+                className="text-left"
+                style={{
+                  position: 'absolute',
+                  marginLeft: `${month.week * 14}px`,
+                }}
+              >
+                {month.label}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* 캘린더 그리드 */}
@@ -153,9 +158,9 @@ export default function PublishingCalendar() {
 
           {/* 활동 그리드 */}
           <div style={{ width: 'calc(100% - 40px)' }}>
-            <div className="flex gap-1">
+            <div className="flex gap-[2px]">
               {Array.from({ length: 52 }, (_, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1">
+                <div key={weekIndex} className="flex flex-col gap-[2px]">
                   {Array.from({ length: 7 }, (_, dayIndex) => {
                     const activityIndex = weekIndex * 7 + dayIndex;
                     const activity = yearData[activityIndex];
