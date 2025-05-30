@@ -26,7 +26,7 @@ app = FastAPI(
 # CORS 설정
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001", "http://127.0.0.1:3001", "*"],  # Next.js 개발 서버 및 모든 오리진 허용
+    allow_origins=["*"],  # 모든 오리진 허용 (개발 환경)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -429,4 +429,4 @@ if __name__ == "__main__":
     print("🚀 블로그 자동화 테스트 서버 시작!")
     print("📖 API 문서: http://localhost:8000/docs")
     print("🤖 Claude API 테스트: http://localhost:8000/test/claude")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

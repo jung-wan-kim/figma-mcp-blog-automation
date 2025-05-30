@@ -16,7 +16,9 @@ export default function PostsPage() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dashboard/posts');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/posts`
+      );
       if (!response.ok) {
         throw new Error('발행 내역을 가져올 수 없습니다');
       }

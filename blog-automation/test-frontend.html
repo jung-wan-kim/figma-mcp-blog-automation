@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Test</title>
+</head>
+<body>
+    <h1>블로그 자동화 대시보드 API 테스트</h1>
+    <div id="result">로딩중...</div>
+    
+    <script>
+        async function testAPI() {
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // 백엔드 직접 호출
+                const response = await fetch('http://localhost:8000/dashboard/stats');
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <h2>✅ API 연결 성공!</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <p>총 게시물: ${data.total_posts}</p>
+                    <p>플랫폼 수: ${data.platforms.length}</p>
+                    <p>최근 게시물: ${data.recent_posts.length}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h2>❌ API 연결 실패</h2>
+                    <p>오류: ${error.message}</p>
+                    <p>CORS 오류일 수 있습니다. 백엔드 서버가 실행 중인지 확인하세요.</p>
+                `;
+            }
+        }
+        
+        // 페이지 로드 시 API 테스트
+        testAPI();
+    </script>
+</body>
+</html>

@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { BlogPlatform } from '@/types';
 import Navbar from '@/components/Navbar';
+import AddPlatformModal from '@/components/AddPlatformModal';
 
 export default function PlatformsPage() {
   const [platforms, setPlatforms] = useState<BlogPlatform[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedPlatformType, setSelectedPlatformType] = useState('');
 
   useEffect(() => {
     fetchPlatforms();
@@ -16,7 +19,9 @@ export default function PlatformsPage() {
   const fetchPlatforms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dashboard/platforms');
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/platforms`
+      );
       if (!response.ok) {
         throw new Error('플랫폼 정보를 가져올 수 없습니다');
       }
@@ -27,6 +32,15 @@ export default function PlatformsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddPlatform = (platform: BlogPlatform) => {
+    setPlatforms([...platforms, platform]);
+  };
+
+  const openModal = (platformType: string) => {
+    setSelectedPlatformType(platformType);
+    setModalOpen(true);
   };
 
   const getPlatformIcon = (type: string) => {
@@ -114,13 +128,22 @@ export default function PlatformsPage() {
                 블로그 플랫폼을 연결하여 자동 발행을 시작해보세요
               </p>
               <div className="flex justify-center space-x-4">
-                <button className="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600">
+                <button
+                  onClick={() => openModal('tistory')}
+                  className="inline-flex items-center px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600"
+                >
                   🟠 Tistory 연결
                 </button>
-                <button className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                <button
+                  onClick={() => openModal('wordpress')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
                   🟦 WordPress 연결
                 </button>
-                <button className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">
+                <button
+                  onClick={() => openModal('naver')}
+                  className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
+                >
                   🟢 Naver Blog 연결
                 </button>
               </div>
@@ -193,13 +216,22 @@ export default function PlatformsPage() {
             <div className="mt-8 bg-white shadow-sm rounded-lg border border-gray-200 p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">새 플랫폼 추가</h3>
               <div className="flex flex-wrap gap-3">
-                <button className="inline-flex items-center px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-md hover:bg-orange-100">
+                <button
+                  onClick={() => openModal('tistory')}
+                  className="inline-flex items-center px-4 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-md hover:bg-orange-100"
+                >
                   🟠 Tistory 연결
                 </button>
-                <button className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100">
+                <button
+                  onClick={() => openModal('wordpress')}
+                  className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-md hover:bg-blue-100"
+                >
                   🟦 WordPress 연결
                 </button>
-                <button className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100">
+                <button
+                  onClick={() => openModal('naver')}
+                  className="inline-flex items-center px-4 py-2 bg-green-50 text-green-700 border border-green-200 rounded-md hover:bg-green-100"
+                >
                   🟢 Naver Blog 연결
                 </button>
               </div>
@@ -207,6 +239,13 @@ export default function PlatformsPage() {
           </div>
         )}
       </div>
+
+      <AddPlatformModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onAdd={handleAddPlatform}
+        platformType={selectedPlatformType}
+      />
     </div>
   );
 }

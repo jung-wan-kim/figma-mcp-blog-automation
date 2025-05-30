@@ -19,13 +19,25 @@ export default function Dashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dashboard/stats');
+      console.log(
+        'Fetching stats from:',
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/stats`
+      );
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/stats`
+      );
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
         throw new Error('대시보드 데이터를 가져올 수 없습니다');
       }
       const data = await response.json();
+      console.log('Received data:', data);
+
       setStats(data);
     } catch (err) {
+      console.error('Fetch error:', err);
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다');
     } finally {
       setLoading(false);
