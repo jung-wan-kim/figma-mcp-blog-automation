@@ -12,12 +12,33 @@ logger = structlog.get_logger()
 class ClaudeContentGenerator:
     def __init__(self):
         """Claude 클라이언트 초기화"""
-        if not settings.claude_api_key or settings.claude_api_key == "sk-ant-api03-실제클로드API키를여기에입력하세요":
-            raise ValueError("Claude API 키가 설정되지 않았습니다. .env 파일에 CLAUDE_API_KEY를 설정해주세요.")
+        import os
         
-        self.client = anthropic.Anthropic(api_key=settings.claude_api_key)
+        # 여러 소스에서 API 키 찾기
+        api_key = None
+        
+        # 1. .env 파일의 CLAUDE_API_KEY
+        if hasattr(settings, 'claude_api_key') and settings.claude_api_key and settings.claude_api_key != "sk-ant-api03-실제클로드API키를여기에입력하세요":
+            api_key = settings.claude_api_key
+            logger.info("Claude API 키를 .env 파일에서 로드했습니다")
+        
+        # 2. 환경변수 ANTHROPIC_API_KEY (Claude Code 등에서 사용)
+        elif os.getenv('ANTHROPIC_API_KEY'):
+            api_key = os.getenv('ANTHROPIC_API_KEY')
+            logger.info("Claude API 키를 ANTHROPIC_API_KEY 환경변수에서 로드했습니다")
+        
+        # 3. 환경변수 CLAUDE_API_KEY
+        elif os.getenv('CLAUDE_API_KEY'):
+            api_key = os.getenv('CLAUDE_API_KEY')
+            logger.info("Claude API 키를 CLAUDE_API_KEY 환경변수에서 로드했습니다")
+        
+        if not api_key:
+            raise ValueError("Claude API 키가 설정되지 않았습니다. .env 파일의 CLAUDE_API_KEY 또는 환경변수 ANTHROPIC_API_KEY를 설정해주세요.")
+        
+        self.client = anthropic.Anthropic(api_key=api_key)
         self.model = settings.claude_model
         self.max_tokens = settings.claude_max_tokens
+        logger.info(f"Claude 클라이언트 초기화 완료: {self.model}")
 
     def generate_content(
         self, 
