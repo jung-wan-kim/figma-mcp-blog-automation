@@ -473,15 +473,9 @@ async def test_publish(request: dict):
             insert_pos = 0  # 초기값 설정
             images_inserted = 0
             
-            # 글 길이에 따른 이미지 개수 결정
-            if target_length <= 1500:
-                image_count = 1
-            elif target_length <= 3000:
-                image_count = 2
-            elif target_length <= 4000:
-                image_count = 3
-            else:
-                image_count = 4
+            # 500자마다 이미지 1개씩 삽입
+            content_length = len(content_with_images)
+            image_count = max(1, content_length // 500)  # 500자마다 1개
             
             # 사용 가능한 이미지 모음
             available_images = []
@@ -490,27 +484,34 @@ async def test_publish(request: dict):
             if content_images['keyword_based']:
                 available_images.extend(content_images['keyword_based'])
             
-            # 이미지 삽입 위치 계산 (균등 분배)
-            if available_images and total_lines > 10:
-                sections = image_count + 1
-                for i in range(min(image_count, len(available_images))):
-                    img = available_images[i]
-                    image_markdown = f"\n\n![{img['alt_text']}]({img['url']})\n*사진: {img['attribution']['photographer']} (Unsplash)*\n\n"
+            # 이미지가 충분하지 않으면 반복 사용
+            if available_images:
+                while len(available_images) < image_count:
+                    available_images.extend(available_images[:min(len(available_images), image_count - len(available_images))])
+            
+            # 문자 수 기준으로 이미지 삽입
+            if available_images:
+                # 현재까지의 문자 수 계산
+                char_count = 0
+                inserted_images = 0
+                new_lines = []
+                
+                for line in content_lines:
+                    new_lines.append(line)
+                    char_count += len(line)
                     
-                    # 이미지 삽입 위치 (균등 분배)
-                    insert_pos = int(total_lines * (i + 1) / sections)
-                    
-                    # 단락 경계 찾기 (빈 줄 근처에 삽입)
-                    for j in range(max(5, insert_pos - 5), min(len(content_lines), insert_pos + 5)):
-                        if j < len(content_lines) and content_lines[j].strip() == '':
-                            insert_pos = j
-                            break
-                    
-                    if insert_pos < len(content_lines):
-                        content_lines.insert(insert_pos, image_markdown)
-                        total_lines = len(content_lines)
-                        images_inserted += 1
-                        logger.info(f"{i+1}번째 이미지 삽입", position=insert_pos, url=img['url'])
+                    # 500자마다 이미지 삽입 (단락 경계 확인)
+                    if char_count >= (inserted_images + 1) * 500 and inserted_images < min(image_count, len(available_images)):
+                        # 현재 줄이 빈 줄이면 바로 삽입
+                        if line.strip() == '':
+                            img = available_images[inserted_images]
+                            image_markdown = f"\n![{img['alt_text']}]({img['url']})\n*사진: {img['attribution']['photographer']} (Unsplash)*\n"
+                            new_lines.append(image_markdown)
+                            inserted_images += 1
+                            images_inserted += 1
+                            logger.info(f"{inserted_images}번째 이미지 삽입 (500자 간격)", chars=char_count, url=img['url'])
+                
+                content_lines = new_lines
             
             # 이미지가 첨부된 최종 본문
             content_with_images = '\n'.join(content_lines)
@@ -537,6 +538,7 @@ async def test_publish(request: dict):
                 "height": 800
             }
             
+            # 이미지 API 오류 시 이미지 없이 진행
             suggested_images = {
                 "title_based": [],
                 "keyword_based": []

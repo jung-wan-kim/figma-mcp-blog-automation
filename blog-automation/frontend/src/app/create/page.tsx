@@ -35,8 +35,7 @@ export default function CreatePage() {
       
       if (result.success) {
         setContent(result.content);
-        // 성공 메시지 표시
-        alert('콘텐츠가 성공적으로 생성되고 저장되었습니다!');
+        // alert 제거 - 조용히 성공 처리
       } else {
         throw new Error(result.message || '콘텐츠 생성에 실패했습니다');
       }
