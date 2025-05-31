@@ -118,7 +118,8 @@ export default function PostPreviewModal({ post, isOpen, onClose }: PostPreviewM
             <div className="p-6 max-h-[60vh] overflow-y-auto">
               {post.content ? (
                 <div 
-                  className="prose prose-lg max-w-none"
+                  className="prose prose-lg max-w-none prose-headings:text-black prose-p:text-black prose-li:text-black prose-strong:text-black"
+                  style={{ color: '#000000' }}
                   dangerouslySetInnerHTML={{ __html: post.content }}
                 />
               ) : (

@@ -31,3 +31,33 @@ body {
     text-wrap: balance;
   }
 }
+
+/* 모달 내 prose 스타일 커스터마이징 */
+.prose p {
+  margin-bottom: 1rem;
+  line-height: 1.7;
+}
+
+.prose h2 {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.prose h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose ul, .prose ol {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+/* 모든 텍스트를 검은색으로 */
+.prose * {
+  color: #000000 !important;
+}
