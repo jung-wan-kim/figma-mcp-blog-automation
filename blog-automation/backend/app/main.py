@@ -430,19 +430,16 @@ async def test_publish(request: dict):
                         f"\n\n## 모범 사례 및 안티패턴\n\n**모범 사례 (Best Practices)**\n\n1. **점진적 마이그레이션**: 전체 시스템을 한 번에 전환하지 말고, 작은 단위부터 점진적으로 적용\n2. **충분한 테스트**: 단위 테스트, 통합 테스트, E2E 테스트를 모두 수행\n3. **문서화**: API 문서, 아키텍처 다이어그램, 운영 가이드 등을 상세히 작성\n4. **버전 관리**: Semantic Versioning을 준수하여 호환성 관리\n\n**주의해야 할 안티패턴**\n\n1. **과도한 추상화**: 불필요한 복잡성을 피하고 KISS 원칙 준수\n2. **성급한 최적화**: 실제 병목 지점을 파악한 후 최적화 진행\n3. **보안 무시**: 'MVP니까 나중에'라는 생각은 위험\n4. **모니터링 부재**: 문제 발생 시 원인 파악이 어려움"
                     ]
                 
-                # 목표 길이에 맞춰 내용 추가 (풍성하게)
+                # 최소 길이 이상으로 내용 추가 (풍성하게)
                 for section in additional_sections:
-                    potential_content = base_content + section
-                    if len(potential_content) <= target_length * 1.05:  # 105%까지 허용
-                        base_content = potential_content
-                        current_length = len(base_content)
-                        
-                        # 목표의 95%에 도달하면 마무리 준비
-                        if current_length >= target_length * 0.95:
-                            break
+                    base_content = base_content + section
+                    current_length = len(base_content)
+                    
+                    # 최소 길이를 충분히 넘었으면 계속 추가 가능
+                    # 가치 있는 내용이라면 계속 추가
                 
-                # 자연스러운 마무리 추가
-                if current_length < target_length:
+                # 마무리 섹션은 항상 추가 (자연스러운 마무리)
+                if True:  # 항상 마무리 추가
                     if tone == "친근하고 전문적인":
                         ending = f"\n\n## 마지막으로 드리는 말씀\n\n{main_keyword}를 배우는 여정이 쉽지만은 않을 거예요. 하지만 포기하지 마세요! 제가 그랬듯이, 여러분도 분명 해낼 수 있어요.\n\n가장 중요한 건 '왜 이걸 배우는가'를 잊지 않는 거예요. 단순히 트렌드를 따라가는 게 아니라, 정말로 문제를 해결하고 가치를 만들어내기 위해 배우는 거잖아요?\n\n도움이 되셨나요? 궁금한 점이 있다면 댓글로 남겨주세요. 제가 아는 선에서 최대한 도와드릴게요! 우리 함께 성장해요! 💪"
                     elif tone == "캐주얼하고 재미있는":
