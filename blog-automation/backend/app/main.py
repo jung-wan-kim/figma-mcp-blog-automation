@@ -448,48 +448,95 @@ async def test_publish(request: dict):
                 "word_count": len(base_content)
             }
         
-        # 이미지 정보 생성 (Unsplash 기반)
-        main_keyword = keywords[0]
-        featured_image = {
-            "id": f"unsplash_{random.randint(1000, 9999)}",
-            "url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=1200&q=80",
-            "thumb_url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=400&q=80",
-            "alt_text": f"{main_keyword}에 관련된 이미지",
-            "attribution": {
-                "photographer": "Unsplash Photographer",
-                "source": "Unsplash"
-            },
-            "width": 1200,
-            "height": 800
-        }
+        # 실제 Unsplash API로 이미지 생성
+        from app.services.unsplash_service import get_unsplash_service
         
-        # 제안 이미지들
-        suggested_images = {
-            "title_based": [
-                {
-                    "id": f"title_{i}",
-                    "url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=800&q=80",
-                    "thumb_url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=300&q=80",
-                    "alt_text": f"{claude_content['title']} 관련 이미지 {i+1}",
-                    "attribution": {"photographer": f"Photographer {i+1}", "source": "Unsplash"},
-                    "width": 800,
-                    "height": 600
+        try:
+            unsplash_service = get_unsplash_service()
+            
+            # 대표 이미지 가져오기
+            featured_image = await unsplash_service.get_featured_image(keywords)
+            if not featured_image:
+                # 대체 이미지
+                featured_image = {
+                    "id": f"fallback_{random.randint(1000, 9999)}",
+                    "url": f"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                    "thumb_url": f"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80",
+                    "alt_text": f"{keywords[0]}에 관련된 이미지",
+                    "attribution": {
+                        "photographer": "Unsplash",
+                        "source": "Unsplash"
+                    },
+                    "width": 1200,
+                    "height": 800
                 }
-                for i in range(3)
-            ],
-            "keyword_based": [
-                {
-                    "id": f"keyword_{i}",
-                    "url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=800&q=80",
-                    "thumb_url": f"https://images.unsplash.com/photo-{random.randint(1500000000, 1700000000)}-{random.randint(100000, 999999)}?auto=format&fit=crop&w=300&q=80",
-                    "alt_text": f"{keywords[i % len(keywords)]} 관련 이미지",
-                    "attribution": {"photographer": f"Photographer {i+1}", "source": "Unsplash"},
-                    "width": 800,
-                    "height": 600
-                }
-                for i in range(min(4, len(keywords)))
-            ]
-        }
+            
+            # 콘텐츠용 추가 이미지들
+            content_images = await unsplash_service.get_content_images(keywords, claude_content['title'])
+            
+            logger.info(f"이미지 검색 결과", 
+                       title_based_count=len(content_images['title_based']),
+                       keyword_based_count=len(content_images['keyword_based']))
+            
+            # 본문에 이미지 첨부하기
+            content_with_images = claude_content['content']
+            
+            # 본문 중간에 이미지 삽입
+            content_lines = content_with_images.split('\n')
+            total_lines = len(content_lines)
+            insert_pos = 0  # 초기값 설정
+            images_inserted = 0
+            
+            # 첫 번째 이미지는 본문 30% 지점에 삽입
+            if content_images['title_based']:
+                img = content_images['title_based'][0]
+                image_markdown = f"\n\n![{img['alt_text']}]({img['url']})\n*사진: {img['attribution']['photographer']} (Unsplash)*\n\n"
+                insert_pos = max(3, int(total_lines * 0.3))
+                if insert_pos < len(content_lines):
+                    content_lines.insert(insert_pos, image_markdown)
+                    total_lines = len(content_lines)  # 라인 수 업데이트
+                    images_inserted += 1
+                    logger.info(f"첫 번째 이미지 삽입", position=insert_pos, url=img['url'])
+            
+            # 두 번째 이미지는 본문 70% 지점에 삽입
+            if content_images['keyword_based']:
+                img = content_images['keyword_based'][0]
+                image_markdown = f"\n\n![{img['alt_text']}]({img['url']})\n*사진: {img['attribution']['photographer']} (Unsplash)*\n\n"
+                second_insert_pos = max(insert_pos + 5, int(total_lines * 0.7))
+                if second_insert_pos < len(content_lines):
+                    content_lines.insert(second_insert_pos, image_markdown)
+                    images_inserted += 1
+                    logger.info(f"두 번째 이미지 삽입", position=second_insert_pos, url=img['url'])
+            
+            # 이미지가 첨부된 최종 본문
+            content_with_images = '\n'.join(content_lines)
+            claude_content['content'] = content_with_images
+            
+            logger.info(f"이미지 첨부 완료", total_inserted=images_inserted)
+            
+            suggested_images = content_images
+            
+        except Exception as img_error:
+            logger.error(f"Unsplash 이미지 로딩 실패: {img_error}")
+            # 이미지 로딩 실패 시 기본 이미지 사용
+            main_keyword = keywords[0]
+            featured_image = {
+                "id": f"fallback_{random.randint(1000, 9999)}",
+                "url": f"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                "thumb_url": f"https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=400&q=80",
+                "alt_text": f"{main_keyword}에 관련된 이미지",
+                "attribution": {
+                    "photographer": "Unsplash",
+                    "source": "Unsplash"
+                },
+                "width": 1200,
+                "height": 800
+            }
+            
+            suggested_images = {
+                "title_based": [],
+                "keyword_based": []
+            }
         
         # 응답 데이터
         content_response = {

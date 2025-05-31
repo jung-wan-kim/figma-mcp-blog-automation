@@ -80,61 +80,103 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
           </div>
         )}
 
-        {/* 콘텐츠 본문 (마크다운 스타일링) */}
+        {/* 콘텐츠 본문 (마크다운 렌더링으로 이미지 포함) */}
         <div>
           <h3 className="text-lg font-medium text-black mb-2">본문</h3>
-          <div className="bg-gray-50 p-4 rounded-lg text-sm text-black whitespace-pre-wrap">
-            {content.content}
+          <div className="bg-gray-50 p-4 rounded-lg text-sm text-black">
+            <div 
+              className="prose prose-sm max-w-none"
+              style={{
+                lineHeight: '1.6',
+                color: '#000000'
+              }}
+            >
+              {content.content.split('\n').map((line, index) => {
+                // 마크다운 이미지 패턴 감지: ![alt](url)
+                const imageMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
+                if (imageMatch) {
+                  const [, altText, imageUrl] = imageMatch;
+                  return (
+                    <div key={index} className="my-4">
+                      <img
+                        src={imageUrl}
+                        alt={altText}
+                        className="w-full h-64 object-cover rounded-lg border border-gray-300"
+                        onError={(e) => {
+                          // 이미지 로딩 실패시 placeholder 표시
+                          e.currentTarget.src = 'https://via.placeholder.com/800x400/f0f0f0/666666?text=Image+Not+Available';
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                
+                // 이미지 캡션 감지: *텍스트*
+                if (line.match(/^\*.*\*$/)) {
+                  return (
+                    <div key={index} className="text-xs text-gray-600 text-center italic mb-4">
+                      {line.replace(/^\*|\*$/g, '')}
+                    </div>
+                  );
+                }
+                
+                // 헤딩 감지
+                if (line.startsWith('## ')) {
+                  return (
+                    <h4 key={index} className="text-lg font-semibold text-black mt-6 mb-3">
+                      {line.replace('## ', '')}
+                    </h4>
+                  );
+                }
+                
+                if (line.startsWith('### ')) {
+                  return (
+                    <h5 key={index} className="text-base font-medium text-black mt-4 mb-2">
+                      {line.replace('### ', '')}
+                    </h5>
+                  );
+                }
+                
+                // 리스트 아이템 감지
+                if (line.match(/^\d+\. /)) {
+                  return (
+                    <div key={index} className="ml-4 mb-1">
+                      {line}
+                    </div>
+                  );
+                }
+                
+                // 볼드 텍스트 처리
+                if (line.includes('**')) {
+                  const parts = line.split(/(\*\*.*?\*\*)/);
+                  return (
+                    <p key={index} className="mb-2">
+                      {parts.map((part, i) => 
+                        part.startsWith('**') && part.endsWith('**') ? (
+                          <strong key={i}>{part.slice(2, -2)}</strong>
+                        ) : (
+                          part
+                        )
+                      )}
+                    </p>
+                  );
+                }
+                
+                // 일반 텍스트 (빈 줄 제외)
+                if (line.trim()) {
+                  return (
+                    <p key={index} className="mb-2">
+                      {line}
+                    </p>
+                  );
+                }
+                
+                // 빈 줄
+                return <br key={index} />;
+              })}
+            </div>
           </div>
         </div>
-
-        {/* 추천 이미지 - 이미지가 있을 때만 표시 */}
-        {content.suggested_images &&
-          ((content.suggested_images.title_based &&
-            content.suggested_images.title_based.length > 0) ||
-            (content.suggested_images.keyword_based &&
-              content.suggested_images.keyword_based.length > 0)) && (
-            <div>
-              <h3 className="text-lg font-medium text-black mb-2">추천 이미지</h3>
-              <div className="space-y-4">
-                {/* 제목 기반 이미지 */}
-                {content.suggested_images.title_based &&
-                  content.suggested_images.title_based.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-black mb-2">제목 기반</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {content.suggested_images.title_based.map((image) => (
-                          <img
-                            key={image.id}
-                            src={image.thumb_url}
-                            alt={image.alt_text}
-                            className="w-full h-24 object-cover rounded border border-gray-200"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                {/* 키워드 기반 이미지 */}
-                {content.suggested_images.keyword_based &&
-                  content.suggested_images.keyword_based.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-medium text-black mb-2">키워드 기반</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {content.suggested_images.keyword_based.map((image) => (
-                          <img
-                            key={image.id}
-                            src={image.thumb_url}
-                            alt={image.alt_text}
-                            className="w-full h-24 object-cover rounded border border-gray-200"
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-              </div>
-            </div>
-          )}
       </div>
     </div>
   );
