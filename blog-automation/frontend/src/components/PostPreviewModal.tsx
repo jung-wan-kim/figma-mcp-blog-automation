@@ -65,8 +65,14 @@ export default function PostPreviewModal({ post, isOpen, onClose }: PostPreviewM
       />
       
       {/* 모달 */}
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4">
+      <div 
+        className="fixed inset-0 z-50 overflow-y-auto"
+        onClick={onClose}
+      >
+        <div 
+          className="flex min-h-full items-center justify-center p-4"
+          onClick={onClose}
+        >
           <div
             className="relative w-full max-w-4xl bg-white rounded-lg shadow-xl"
             onClick={(e) => e.stopPropagation()}
