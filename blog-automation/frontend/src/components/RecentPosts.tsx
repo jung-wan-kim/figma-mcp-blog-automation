@@ -1,12 +1,26 @@
 'use client';
 
+import { useState } from 'react';
 import { BlogPost } from '@/types';
+import PostPreviewModal from './PostPreviewModal';
 
 interface RecentPostsProps {
   posts: BlogPost[];
 }
 
 export default function RecentPosts({ posts }: RecentPostsProps) {
+  const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePostClick = (post: BlogPost) => {
+    setSelectedPost(post);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedPost(null), 300);
+  };
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('ko-KR', {
@@ -61,11 +75,12 @@ export default function RecentPosts({ posts }: RecentPostsProps) {
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => handlePostClick(post)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 truncate">{post.title}</h4>
+                    <h4 className="font-medium text-gray-900 truncate hover:text-blue-600 transition-colors">{post.title}</h4>
                     <p className="mt-1 text-sm text-gray-500">
                       {post.blog_platforms?.name || post.platform?.name || '알 수 없는 플랫폼'} •{' '}
                       {formatDate(post.published_at || post.created_at)}
@@ -101,6 +116,13 @@ export default function RecentPosts({ posts }: RecentPostsProps) {
           </div>
         )}
       </div>
+      
+      {/* 미리보기 모달 */}
+      <PostPreviewModal
+        post={selectedPost}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }
