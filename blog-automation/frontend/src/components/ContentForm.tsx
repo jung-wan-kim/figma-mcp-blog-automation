@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PublishRequest } from '@/types';
 
 interface ContentFormProps {
@@ -9,20 +9,78 @@ interface ContentFormProps {
   error: string | null;
 }
 
+interface Platform {
+  id: string;
+  name: string;
+  platform_type: string;
+  url: string;
+}
+
 export default function ContentForm({ onSubmit, loading, error }: ContentFormProps) {
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
+  const [selectedPlatformId, setSelectedPlatformId] = useState<string>('');
   const [formData, setFormData] = useState<PublishRequest>({
     keywords: [],
     content_type: 'blog_post',
     target_length: 3000,
     tone: '친근하고 전문적인',
     blog_platform: {
-      name: '티스토리 블로그',
-      platform_type: 'tistory',
-      url: 'https://example.tistory.com',
+      name: '',
+      platform_type: '',
+      url: '',
     },
   });
 
   const [keywordInput, setKeywordInput] = useState('');
+
+  // 플랫폼 목록 가져오기
+  useEffect(() => {
+    fetchPlatforms();
+  }, []);
+
+  const fetchPlatforms = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/dashboard/platforms`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setPlatforms(data.platforms || []);
+        
+        // 첫 번째 플랫폼을 기본값으로 설정
+        if (data.platforms && data.platforms.length > 0) {
+          const firstPlatform = data.platforms[0];
+          setSelectedPlatformId(firstPlatform.id);
+          setFormData(prev => ({
+            ...prev,
+            blog_platform: {
+              name: firstPlatform.name,
+              platform_type: firstPlatform.platform_type,
+              url: firstPlatform.url,
+            }
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('플랫폼 목록 가져오기 실패:', err);
+    }
+  };
+
+  // 플랫폼 선택 시 formData 업데이트
+  const handlePlatformChange = (platformId: string) => {
+    const platform = platforms.find(p => p.id === platformId);
+    if (platform) {
+      setSelectedPlatformId(platformId);
+      setFormData(prev => ({
+        ...prev,
+        blog_platform: {
+          name: platform.name,
+          platform_type: platform.platform_type,
+          url: platform.url,
+        }
+      }));
+    }
+  };
 
   const handleKeywordAdd = () => {
     if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
@@ -91,6 +149,23 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               </span>
             ))}
           </div>
+        </div>
+
+        {/* 플랫폼 선택 */}
+        <div>
+          <label className="block text-sm font-medium text-black mb-2">발행할 플랫폼</label>
+          <select
+            value={selectedPlatformId}
+            onChange={(e) => handlePlatformChange(e.target.value)}
+            className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
+            style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
+          >
+            {platforms.map((platform) => (
+              <option key={platform.id} value={platform.id}>
+                {platform.name} ({platform.platform_type})
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 콘텐츠 설정 - 한 줄 정렬 */}

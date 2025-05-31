@@ -32,7 +32,14 @@ export default function CreatePage() {
       }
 
       const result = await response.json();
-      setContent(result.content);
+      
+      if (result.success) {
+        setContent(result.content);
+        // 성공 메시지 표시
+        alert('콘텐츠가 성공적으로 생성되고 저장되었습니다!');
+      } else {
+        throw new Error(result.message || '콘텐츠 생성에 실패했습니다');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다');
     } finally {

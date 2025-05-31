@@ -450,12 +450,13 @@ async def test_publish(request: dict):
                     "content": claude_content["content"],
                     "meta_description": claude_content["meta_description"],
                     "featured_image_url": featured_image.get("url") if featured_image else None,
-                    "status": "published",
-                    "views": random.randint(50, 500),
-                    "likes": random.randint(5, 50),
-                    "comments": random.randint(0, 20),
-                    "published_url": f"{platform_url}/posts/{random.randint(1, 1000)}",
-                    "published_at": datetime.now().isoformat(),
+                    "status": "draft",  # 초기 상태는 draft로 설정
+                    "views": 0,  # 실제 값으로 시작
+                    "likes": 0,  # 실제 값으로 시작
+                    "comments": 0,  # 실제 값으로 시작
+                    "tags": keywords,  # 키워드를 태그로 저장
+                    "published_url": None,  # 아직 발행 안됨
+                    "published_at": None,  # 아직 발행 안됨
                     "created_at": datetime.now().isoformat()
                 }
                 

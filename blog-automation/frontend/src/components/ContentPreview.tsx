@@ -311,6 +311,24 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
             </div>
           </div>
         </div>
+        {/* 콘텐츠 생성 완료 시 액션 버튼 추가 */}
+        {content && (
+          <div className="flex justify-end space-x-3 pt-4 mt-6 border-t border-gray-200">
+            <a
+              href="/posts"
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
+            >
+              📝 포스트 목록 보기
+            </a>
+            <a
+              href="/create"
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 flex items-center"
+            >
+              ✍️ 새 콘텐츠 생성
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
