@@ -233,7 +233,7 @@ export default function PostPreviewModal({ post, isOpen, onClose }: PostPreviewM
                       key={index}
                       className="px-3 py-1 bg-blue-100 text-blue-700 text-sm rounded-full"
                     >
-                      #{tag}
+                      {tag}
                     </span>
                   ))}
                 </div>
@@ -256,12 +256,6 @@ export default function PostPreviewModal({ post, isOpen, onClose }: PostPreviewM
                     </svg>
                   </a>
                 )}
-                <a
-                  href={`/posts/${post.id}`}
-                  className="text-gray-600 hover:text-gray-800 font-medium"
-                >
-                  상세 페이지로 이동
-                </a>
               </div>
               
               <button
