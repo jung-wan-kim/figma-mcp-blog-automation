@@ -245,6 +245,7 @@ async def get_posts():
             post = {
                 "id": post_data.get('id'),
                 "title": post_data.get('title', '제목 없음'),
+                "content": post_data.get('content', ''),  # content 필드 추가
                 "platform": {
                     "name": platform_info.get('name', '알 수 없는 플랫폼'),
                     "platform_type": platform_info.get('platform_type', 'unknown'),
@@ -256,6 +257,7 @@ async def get_posts():
                 "views": post_data.get('views', 0),
                 "likes": post_data.get('likes', 0),
                 "comments": post_data.get('comments', 0),
+                "tags": post_data.get('tags', []),  # tags 필드 추가
                 "created_at": post_data.get('created_at'),
                 "published_at": post_data.get('published_at')
             }
