@@ -4,10 +4,12 @@
 **+ AI 블로그 자동화 시스템 (NEW!)**
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Deployment](https://img.shields.io/badge/deployment-live-success)
-![AI Blog](https://img.shields.io/badge/AI%20Blog-Claude%203.5-purple)
+![AI Blog](https://img.shields.io/badge/AI%20Blog-Claude%203.7-purple)
+![Claude API](https://img.shields.io/badge/Claude%20API-Integrated-green)
+![Copy Feature](https://img.shields.io/badge/Copy%20Feature-HTML%20Support-orange)
 
 ## 🌐 Live Demo
 
