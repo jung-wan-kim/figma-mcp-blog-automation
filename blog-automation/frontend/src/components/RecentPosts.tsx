@@ -85,11 +85,6 @@ export default function RecentPosts({ posts }: RecentPostsProps) {
                       {post.blog_platforms?.name || post.platform?.name || '알 수 없는 플랫폼'} •{' '}
                       {formatDate(post.published_at || post.created_at)}
                     </p>
-                    <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                      <span>👀 {post.views.toLocaleString()}</span>
-                      <span>❤️ {post.likes.toLocaleString()}</span>
-                      <span>💬 {post.comments.toLocaleString()}</span>
-                    </div>
                   </div>
 
                   <div className="flex flex-col items-end space-y-2">

@@ -144,13 +144,8 @@ export default function PostDetailPage() {
 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">{post.title}</h1>
 
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div className="flex items-center space-x-4">
-              <span>👀 {post.views.toLocaleString()}</span>
-              <span>❤️ {post.likes.toLocaleString()}</span>
-              <span>💬 {post.comments.toLocaleString()}</span>
-            </div>
-            {post.published_url && (
+          {post.published_url && (
+            <div className="mt-3">
               <a
                 href={post.published_url}
                 target="_blank"
@@ -159,8 +154,8 @@ export default function PostDetailPage() {
               >
                 원본 글 보기 →
               </a>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* 태그 */}
           {post.tags && post.tags.length > 0 && (

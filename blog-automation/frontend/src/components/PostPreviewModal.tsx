@@ -101,24 +101,6 @@ export default function PostPreviewModal({ post, isOpen, onClose }: PostPreviewM
               </button>
             </div>
             
-            {/* 통계 */}
-            <div className="flex items-center space-x-6 px-6 py-4 bg-gray-50 border-b">
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">👀</span>
-                <span className="font-medium">{post.views.toLocaleString()}</span>
-                <span className="text-sm text-gray-500">조회</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">❤️</span>
-                <span className="font-medium">{post.likes.toLocaleString()}</span>
-                <span className="text-sm text-gray-500">좋아요</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-600">💬</span>
-                <span className="font-medium">{post.comments.toLocaleString()}</span>
-                <span className="text-sm text-gray-500">댓글</span>
-              </div>
-            </div>
             
             {/* 본문 */}
             <div className="p-6 max-h-[60vh] overflow-y-auto">

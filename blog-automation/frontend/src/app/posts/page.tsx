@@ -149,12 +149,7 @@ export default function PostsPage() {
                       </p>
                     )}
 
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <div className="flex items-center space-x-4">
-                        <span>👀 {post.views.toLocaleString()}</span>
-                        <span>❤️ {post.likes.toLocaleString()}</span>
-                        <span>💬 {post.comments.toLocaleString()}</span>
-                      </div>
+                    <div className="flex items-center justify-end text-sm text-gray-600 mt-3">
                       <div className="flex items-center space-x-3">
                         <a
                           href={`/posts/${post.id}`}
