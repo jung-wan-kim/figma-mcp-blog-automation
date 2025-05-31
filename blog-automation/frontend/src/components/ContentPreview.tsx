@@ -12,13 +12,49 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
   const [copiedTitle, setCopiedTitle] = useState(false);
   const [copiedContent, setCopiedContent] = useState(false);
   
-  // 클립보드에 복사하는 함수
+  // 이미지를 Blob으로 변환하는 함수
+  const imageUrlToBlob = async (url: string): Promise<Blob> => {
+    const response = await fetch(url);
+    return response.blob();
+  };
+
+  // HTML을 클립보드에 복사하는 함수 (이미지 포함)
+  const copyContentAsHtml = async (content: string) => {
+    try {
+      // 마크다운 이미지 패턴을 HTML img 태그로 변환
+      let htmlContent = content.replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; height: auto;" />');
+      
+      // 마크다운 헤딩을 HTML로 변환
+      htmlContent = htmlContent.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+      htmlContent = htmlContent.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+      
+      // 볼드 텍스트 변환
+      htmlContent = htmlContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      
+      // 줄바꿈을 <br>로 변환
+      htmlContent = htmlContent.replace(/\n/g, '<br>');
+      
+      // ClipboardItem으로 HTML과 텍스트 모두 포함
+      const clipboardItem = new ClipboardItem({
+        'text/html': new Blob([htmlContent], { type: 'text/html' }),
+        'text/plain': new Blob([content], { type: 'text/plain' })
+      });
+      
+      await navigator.clipboard.write([clipboardItem]);
+      
+      setCopiedContent(true);
+      setTimeout(() => setCopiedContent(false), 2000);
+      
+    } catch (err) {
+      console.error('HTML 복사 실패:', err);
+      // HTML 복사가 실패하면 텍스트로 대체
+      await copyToClipboard(content, 'content');
+    }
+  };
+
+  // 일반 텍스트 클립보드 복사 함수
   const copyToClipboard = async (text: string, type: 'title' | 'content') => {
     try {
-      // 텍스트가 제대로 복사되는지 확인하기 위해 콘솔에 출력
-      console.log(`복사할 ${type} 내용:`, text.slice(0, 200) + '...');
-      
-      // 마크다운 형태의 텍스트를 그대로 복사
       await navigator.clipboard.writeText(text);
       
       if (type === 'title') {
@@ -153,9 +189,9 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-lg font-medium text-black">본문</h3>
             <button
-              onClick={() => copyToClipboard(content.content, 'content')}
+              onClick={() => copyContentAsHtml(content.content)}
               className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-              title="본문 복사하기 (마크다운 형식, 이미지 포함)"
+              title="본문 복사하기 (이미지 포함한 HTML 형식)"
             >
               {copiedContent ? (
                 <>
@@ -179,7 +215,7 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
             {/* 이미지 포함 안내 */}
             {content.content.includes('![') && (
               <div className="mb-3 p-2 bg-blue-50 border-l-4 border-blue-400 text-blue-700 text-xs">
-                💡 이 본문에는 이미지가 포함되어 있습니다. 복사 시 마크다운 형식으로 복사됩니다.
+                🖼️ 이 본문에는 이미지가 포함되어 있습니다. 복사 시 이미지와 함께 HTML 형식으로 복사됩니다.
               </div>
             )}
             <div 
