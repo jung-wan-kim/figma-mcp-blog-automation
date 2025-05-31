@@ -15,7 +15,12 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
   // 클립보드에 복사하는 함수
   const copyToClipboard = async (text: string, type: 'title' | 'content') => {
     try {
+      // 텍스트가 제대로 복사되는지 확인하기 위해 콘솔에 출력
+      console.log(`복사할 ${type} 내용:`, text.slice(0, 200) + '...');
+      
+      // 마크다운 형태의 텍스트를 그대로 복사
       await navigator.clipboard.writeText(text);
+      
       if (type === 'title') {
         setCopiedTitle(true);
         setTimeout(() => setCopiedTitle(false), 2000);
@@ -25,6 +30,26 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
       }
     } catch (err) {
       console.error('복사 실패:', err);
+      // 대체 방법 시도 (구형 브라우저 지원)
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (type === 'title') {
+          setCopiedTitle(true);
+          setTimeout(() => setCopiedTitle(false), 2000);
+        } else {
+          setCopiedContent(true);
+          setTimeout(() => setCopiedContent(false), 2000);
+        }
+      } catch (fallbackErr) {
+        console.error('대체 복사 방법도 실패:', fallbackErr);
+        alert('복사 기능을 사용할 수 없습니다. 브라우저 설정을 확인해주세요.');
+      }
     }
   };
   if (loading) {
@@ -130,7 +155,7 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
             <button
               onClick={() => copyToClipboard(content.content, 'content')}
               className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
-              title="본문 복사하기"
+              title="본문 복사하기 (마크다운 형식, 이미지 포함)"
             >
               {copiedContent ? (
                 <>
@@ -151,6 +176,12 @@ export default function ContentPreview({ content, loading }: ContentPreviewProps
             </button>
           </div>
           <div className="bg-gray-50 p-4 rounded-lg text-sm text-black">
+            {/* 이미지 포함 안내 */}
+            {content.content.includes('![') && (
+              <div className="mb-3 p-2 bg-blue-50 border-l-4 border-blue-400 text-blue-700 text-xs">
+                💡 이 본문에는 이미지가 포함되어 있습니다. 복사 시 마크다운 형식으로 복사됩니다.
+              </div>
+            )}
             <div 
               className="prose prose-sm max-w-none"
               style={{
