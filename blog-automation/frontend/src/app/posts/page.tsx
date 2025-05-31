@@ -133,7 +133,21 @@ export default function PostsPage() {
                       <span className="text-xs text-gray-500">{formatDate(post.published_at)}</span>
                     </div>
 
-                    <h2 className="text-lg font-semibold text-black mb-2">{post.title}</h2>
+                    <h2 className="text-lg font-semibold text-black mb-2">
+                      <a 
+                        href={`/posts/${post.id}`}
+                        className="hover:text-blue-600 transition-colors"
+                      >
+                        {post.title}
+                      </a>
+                    </h2>
+
+                    {/* HTML 콘텐츠를 텍스트로 변환해서 미리보기 표시 */}
+                    {post.content && (
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                        {post.content.replace(/<[^>]*>/g, '').substring(0, 150)}...
+                      </p>
+                    )}
 
                     <div className="flex items-center justify-between text-sm text-gray-600">
                       <div className="flex items-center space-x-4">
@@ -141,16 +155,24 @@ export default function PostsPage() {
                         <span>❤️ {post.likes.toLocaleString()}</span>
                         <span>💬 {post.comments.toLocaleString()}</span>
                       </div>
-                      {post.published_url && (
+                      <div className="flex items-center space-x-3">
                         <a
-                          href={post.published_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/posts/${post.id}`}
                           className="text-blue-600 hover:text-blue-800"
                         >
-                          글 보기 →
+                          자세히 보기
                         </a>
-                      )}
+                        {post.published_url && (
+                          <a
+                            href={post.published_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-gray-600 hover:text-gray-800"
+                          >
+                            원본 →
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
