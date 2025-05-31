@@ -106,41 +106,32 @@ async def get_dashboard_stats():
         platforms_result = supabase_client.table('blog_platforms').select("*").execute()
         platforms = platforms_result.data or []
         
-        # 실제 콘텐츠 수 계산
-        contents_result = supabase_client.table('contents').select("id").execute()
-        total_posts = len(contents_result.data) if contents_result.data else 0
+        # 실제 포스트 수 계산 (blog_posts 테이블 사용)
+        posts_result = supabase_client.table('blog_posts').select("id").execute()
+        total_posts = len(posts_result.data) if posts_result.data else 0
         
         # 최근 포스트 가져오기
         posts_response = await get_posts()
         recent_posts = posts_response["posts"][:5]
         
-        # 각 플랫폼의 실제 통계 계산
+        # 각 플랫폼의 실제 통계 계산 (blog_posts 테이블에서)
         for platform in platforms:
             platform_id = platform.get('id')
             
-            # 해당 플랫폼의 계정 수
-            accounts_result = supabase_client.table('blog_accounts').select("id").eq('platform_id', platform_id).execute()
-            account_count = len(accounts_result.data) if accounts_result.data else 0
+            # 해당 플랫폼의 포스트들
+            platform_posts_result = supabase_client.table('blog_posts').select(
+                "views, likes, comments"
+            ).eq('platform_id', platform_id).execute()
             
-            # 해당 플랫폼의 발행 통계
-            if accounts_result.data:
-                account_ids = [acc['id'] for acc in accounts_result.data]
-                publications_result = supabase_client.table('publications').select(
-                    "views, likes, comments"
-                ).in_('blog_account_id', account_ids).execute()
-                
-                if publications_result.data:
-                    total_views = sum(pub.get('views', 0) for pub in publications_result.data)
-                    total_likes = sum(pub.get('likes', 0) for pub in publications_result.data)
-                    total_comments = sum(pub.get('comments', 0) for pub in publications_result.data)
-                    post_count = len(publications_result.data)
-                else:
-                    total_views = total_likes = total_comments = post_count = 0
+            if platform_posts_result.data:
+                total_views = sum(post.get('views', 0) for post in platform_posts_result.data)
+                total_likes = sum(post.get('likes', 0) for post in platform_posts_result.data)
+                total_comments = sum(post.get('comments', 0) for post in platform_posts_result.data)
+                post_count = len(platform_posts_result.data)
             else:
-                total_views = total_likes = total_comments = post_count = account_count = 0
+                total_views = total_likes = total_comments = post_count = 0
             
-            # 플랫폼 데이터 업데이트
-            platform['account_count'] = account_count
+            # 플랫폼 데이터 업데이트 (실제 계산된 값으로)
             platform['post_count'] = post_count
             platform['total_views'] = total_views
             platform['total_likes'] = total_likes
@@ -167,9 +158,9 @@ async def get_publishing_activity():
     from collections import defaultdict
     
     try:
-        # Supabase에서 실제 발행된 포스트 데이터 가져오기
-        contents_result = supabase_client.table('contents').select("*").order('created_at', desc=True).execute()
-        contents = contents_result.data or []
+        # Supabase에서 실제 발행된 포스트 데이터 가져오기 (blog_posts 테이블 사용)
+        posts_result = supabase_client.table('blog_posts').select("*").order('created_at', desc=True).execute()
+        posts = posts_result.data or []
         
         # 365일 기간 설정
         end_date = datetime.now()
@@ -178,16 +169,16 @@ async def get_publishing_activity():
         # 날짜별 포스트 그룹화
         posts_by_date = defaultdict(list)
         
-        for content in contents:
-            created_at = content.get('created_at')
+        for post in posts:
+            created_at = post.get('created_at')
             if created_at:
                 try:
-                    content_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-                    content_date = content_date.date()
+                    post_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    post_date = post_date.date()
                     
                     # 365일 범위 내의 데이터만 포함
-                    if start_date.date() <= content_date <= end_date.date():
-                        posts_by_date[content_date.strftime("%Y-%m-%d")].append(content.get('title', '제목 없음'))
+                    if start_date.date() <= post_date <= end_date.date():
+                        posts_by_date[post_date.strftime("%Y-%m-%d")].append(post.get('title', '제목 없음'))
                 except:
                     continue
         
@@ -241,64 +232,34 @@ async def get_publishing_activity():
 async def get_posts():
     """발행된 포스트 목록 - Supabase 실제 데이터"""
     try:
-        # Supabase에서 실제 콘텐츠 데이터 가져오기
-        contents_result = supabase_client.table('contents').select("*").order('created_at', desc=True).execute()
-        contents = contents_result.data or []
+        # Supabase에서 실제 포스트 데이터 가져오기 (blog_posts와 blog_platforms 조인)
+        posts_result = supabase_client.table('blog_posts').select(
+            "*, blog_platforms!inner(id, name, platform_type, url)"
+        ).order('created_at', desc=True).execute()
         
-        # publications 테이블에서 발행 정보 가져오기
-        publications_result = supabase_client.table('publications').select("*").execute()
-        publications = publications_result.data or []
-        
-        # blog_accounts와 blog_platforms 조인하여 플랫폼 정보 가져오기
-        accounts_result = supabase_client.table('blog_accounts').select(
-            "id, platform_id, account_name, blog_platforms(platform_type, name)"
-        ).execute()
-        accounts = accounts_result.data or []
-        
-        # 포스트 데이터 변환
         posts = []
         
-        for content in contents:
-            # 해당 콘텐츠의 발행 정보 찾기
-            content_publications = [p for p in publications if p.get('content_id') == content.get('id')]
+        for post_data in posts_result.data or []:
+            platform_info = post_data.get('blog_platforms', {})
             
-            if content_publications:
-                for pub in content_publications:
-                    # 계정 정보 찾기
-                    account = next((a for a in accounts if a.get('id') == pub.get('blog_account_id')), None)
-                    
-                    platform_info = account.get('blog_platforms', {}) if account else {}
-                    
-                    post = {
-                        "id": content.get('id'),
-                        "title": content.get('title', '제목 없음'),
-                        "platform": platform_info.get('platform_type', 'unknown'),
-                        "platform_name": platform_info.get('name', account.get('account_name', '알 수 없는 플랫폼') if account else '알 수 없는 플랫폼'),
-                        "status": pub.get('status', 'draft'),
-                        "views": pub.get('views', 0),
-                        "likes": pub.get('likes', 0),
-                        "comments": pub.get('comments', 0),
-                        "created_at": content.get('created_at'),
-                        "published_at": pub.get('published_at'),
-                        "url": pub.get('published_url', '')
-                    }
-                    posts.append(post)
-            else:
-                # 발행되지 않은 콘텐츠도 포함
-                post = {
-                    "id": content.get('id'),
-                    "title": content.get('title', '제목 없음'),
-                    "platform": 'draft',
-                    "platform_name": '임시저장',
-                    "status": 'draft',
-                    "views": 0,
-                    "likes": 0,
-                    "comments": 0,
-                    "created_at": content.get('created_at'),
-                    "published_at": None,
-                    "url": ''
-                }
-                posts.append(post)
+            post = {
+                "id": post_data.get('id'),
+                "title": post_data.get('title', '제목 없음'),
+                "platform": {
+                    "name": platform_info.get('name', '알 수 없는 플랫폼'),
+                    "platform_type": platform_info.get('platform_type', 'unknown'),
+                    "url": platform_info.get('url', '')
+                },
+                "blog_platforms": platform_info,  # RecentPosts 컴포넌트에서 사용
+                "published_url": post_data.get('published_url', ''),
+                "status": post_data.get('status', 'draft'),
+                "views": post_data.get('views', 0),
+                "likes": post_data.get('likes', 0),
+                "comments": post_data.get('comments', 0),
+                "created_at": post_data.get('created_at'),
+                "published_at": post_data.get('published_at')
+            }
+            posts.append(post)
         
         return {"posts": posts}
         
