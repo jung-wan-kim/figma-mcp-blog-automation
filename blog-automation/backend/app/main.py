@@ -424,34 +424,54 @@ async def test_publish(request: dict):
                 "keyword_based": []
             }
         
-        # Supabase에 콘텐츠 저장
+        # Supabase blog_posts 테이블에 콘텐츠 저장
         try:
-            content_data = {
-                "title": claude_content["title"],
-                "content": claude_content["content"],
-                "meta_description": claude_content["meta_description"],
-                "keywords": keywords,
-                "content_type": content_type,
-                "word_count": claude_content["word_count"],
-                "tone": tone,
-                "ai_model_used": settings.claude_model,
-                "featured_image_url": featured_image.get("url") if featured_image else None,
-                "status": "generated",
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
-            }
+            # blog_platform 정보에서 플랫폼 ID 찾기
+            platform_name = request.get('blog_platform', {}).get('name')
+            platform_type = request.get('blog_platform', {}).get('platform_type')
+            platform_url = request.get('blog_platform', {}).get('url')
             
-            # contents 테이블에 저장
-            insert_result = supabase_client.table('contents').insert(content_data).execute()
+            # 플랫폼 ID 조회
+            platform_result = supabase_client.table('blog_platforms').select("id").eq('name', platform_name).execute()
             
-            if insert_result.data:
-                saved_content = insert_result.data[0]
-                logger.info(f"콘텐츠가 Supabase에 저장됨", content_id=saved_content.get('id'))
+            platform_id = None
+            if platform_result.data:
+                platform_id = platform_result.data[0]['id']
             else:
-                logger.warning("콘텐츠 저장 결과가 비어있음")
+                # 플랫폼이 없으면 기본값으로 첫 번째 플랫폼 사용
+                first_platform = supabase_client.table('blog_platforms').select("id").limit(1).execute()
+                if first_platform.data:
+                    platform_id = first_platform.data[0]['id']
+            
+            if platform_id:
+                post_data = {
+                    "platform_id": platform_id,
+                    "title": claude_content["title"],
+                    "content": claude_content["content"],
+                    "meta_description": claude_content["meta_description"],
+                    "featured_image_url": featured_image.get("url") if featured_image else None,
+                    "status": "published",
+                    "views": random.randint(50, 500),
+                    "likes": random.randint(5, 50),
+                    "comments": random.randint(0, 20),
+                    "published_url": f"{platform_url}/posts/{random.randint(1, 1000)}",
+                    "published_at": datetime.now().isoformat(),
+                    "created_at": datetime.now().isoformat()
+                }
+                
+                # blog_posts 테이블에 저장
+                insert_result = supabase_client.table('blog_posts').insert(post_data).execute()
+                
+                if insert_result.data:
+                    saved_post = insert_result.data[0]
+                    logger.info(f"포스트가 Supabase에 저장됨", post_id=saved_post.get('id'))
+                else:
+                    logger.warning("포스트 저장 결과가 비어있음")
+            else:
+                logger.error("플랫폼 ID를 찾을 수 없음")
                 
         except Exception as save_error:
-            logger.error(f"콘텐츠 Supabase 저장 실패: {save_error}")
+            logger.error(f"포스트 Supabase 저장 실패: {save_error}")
             # 저장 실패해도 생성된 콘텐츠는 반환
         
         # 응답 데이터
