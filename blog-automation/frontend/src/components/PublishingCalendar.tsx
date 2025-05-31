@@ -166,7 +166,15 @@ export default function PublishingCalendar() {
                     const activityIndex = weekIndex * 7 + dayIndex;
                     const activity = yearData[activityIndex];
 
-                    if (!activity) return <div key={dayIndex} className="w-3 h-3" />;
+                    // 오른쪽 끝 주(52번째 주)는 항상 7개 칸을 모두 표시
+                    if (!activity) {
+                      return (
+                        <div 
+                          key={dayIndex} 
+                          className={`w-3 h-3 rounded-sm ${weekIndex === 52 ? 'bg-gray-100' : ''}`} 
+                        />
+                      );
+                    }
 
                     return (
                       <div
