@@ -88,12 +88,10 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
       return;
     }
     
-    // 주제를 키워드로 변환 (주제를 기반으로 키워드 생성)
-    const topicKeywords = topic.split(' ').filter(word => word.length > 1);
-    
+    // 주제 전체를 키워드로 전달
     onSubmit({
       ...formData,
-      keywords: topicKeywords
+      keywords: [topic.trim()]  // 주제를 그대로 전달
     });
   };
 

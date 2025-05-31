@@ -311,8 +311,11 @@ async def test_publish(request: dict):
         if not keywords:
             return {
                 "success": False,
-                "message": "키워드를 최소 1개 이상 입력해주세요"
+                "message": "주제를 입력해주세요"
             }
+        
+        # 첫 번째 키워드가 주제
+        topic = keywords[0] if keywords else "주제"
         
         # Claude API를 사용한 콘텐츠 생성
         try:
@@ -576,7 +579,7 @@ async def test_publish(request: dict):
                     "views": 0,  # 실제 값으로 시작
                     "likes": 0,  # 실제 값으로 시작
                     "comments": 0,  # 실제 값으로 시작
-                    "tags": keywords,  # 키워드를 태그로 저장
+                    "tags": [topic],  # 주제를 태그로 저장
                     "published_url": None,  # 아직 발행 안됨
                     "published_at": None,  # 아직 발행 안됨
                     "created_at": datetime.now().isoformat()
