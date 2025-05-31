@@ -19,6 +19,7 @@ interface Platform {
 export default function ContentForm({ onSubmit, loading, error }: ContentFormProps) {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [selectedPlatformId, setSelectedPlatformId] = useState<string>('');
+  const [topic, setTopic] = useState<string>('');
   const [formData, setFormData] = useState<PublishRequest>({
     keywords: [],
     content_type: 'blog_post',
@@ -30,8 +31,6 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
       url: '',
     },
   });
-
-  const [keywordInput, setKeywordInput] = useState('');
 
   // 플랫폼 목록 가져오기
   useEffect(() => {
@@ -82,72 +81,41 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
     }
   };
 
-  const handleKeywordAdd = () => {
-    if (keywordInput.trim() && !formData.keywords.includes(keywordInput.trim())) {
-      setFormData({
-        ...formData,
-        keywords: [...formData.keywords, keywordInput.trim()],
-      });
-      setKeywordInput('');
-    }
-  };
-
-  const handleKeywordRemove = (keyword: string) => {
-    setFormData({
-      ...formData,
-      keywords: formData.keywords.filter((k) => k !== keyword),
-    });
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.keywords.length === 0) {
-      alert('최소 1개 이상의 키워드를 입력해주세요');
+    if (!topic.trim()) {
+      alert('주제를 입력해주세요');
       return;
     }
-    onSubmit(formData);
+    
+    // 주제를 키워드로 변환 (주제를 기반으로 키워드 생성)
+    const topicKeywords = topic.split(' ').filter(word => word.length > 1);
+    
+    onSubmit({
+      ...formData,
+      keywords: topicKeywords
+    });
   };
 
   return (
     <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-6">
       <form onSubmit={handleSubmit} className="space-y-6" style={{ color: '#000000' }}>
-        {/* 키워드 입력 */}
+        {/* 주제 입력 */}
         <div>
-          <label className="block text-sm font-medium text-black mb-2">키워드 *</label>
+          <label className="block text-sm font-medium text-black mb-2">작성하고 싶은 주제 *</label>
           <div className="mb-3">
             <input
               type="text"
-              value={keywordInput}
-              onChange={(e) => setKeywordInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleKeywordAdd();
-                }
-              }}
-              placeholder="키워드를 입력하고 엔터를 누르세요"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="예: 인공지능이 바꿀 미래의 교육 방식"
               className="w-full px-3 py-2 border-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-black"
               style={{ color: '#000000 !important', backgroundColor: '#ffffff !important' }}
+              required
             />
-          </div>
-
-          {/* 키워드 태그 */}
-          <div className="flex flex-wrap gap-2">
-            {formData.keywords.map((keyword, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-              >
-                {keyword}
-                <button
-                  type="button"
-                  onClick={() => handleKeywordRemove(keyword)}
-                  className="ml-2 text-blue-600 hover:text-blue-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
+            <p className="text-xs text-gray-500 mt-1">
+              작성하고 싶은 주제를 자유롭게 입력해주세요. AI가 주제에 맞는 콘텐츠를 생성합니다.
+            </p>
           </div>
         </div>
 
@@ -234,9 +202,9 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
         {/* 제출 버튼 */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !topic.trim()}
           className={`w-full py-3 px-4 rounded-md font-medium ${
-            loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
+            loading || !topic.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-600'
           } text-white transition-colors`}
         >
           {loading ? (
@@ -245,7 +213,7 @@ export default function ContentForm({ onSubmit, loading, error }: ContentFormPro
               콘텐츠 생성 중...
             </div>
           ) : (
-            '🚀 콘텐츠 생성 및 발행'
+            '🚀 콘텐츠 생성'
           )}
         </button>
       </form>
