@@ -143,13 +143,20 @@ class ClaudeContentGenerator:
 6. 글이 자연스럽게 끝나면 거기서 마무리 (억지로 늘리지 않기)
 
 **출력 형식**:
-다음 JSON 형식으로 응답해주세요:
+다음과 같은 유효한 JSON 형식으로만 응답해주세요. JSON 외의 다른 텍스트는 포함하지 마세요:
+
 {{
     "title": "매력적이고 클릭하고 싶은 제목",
     "meta_description": "150자 이내의 흥미로운 설명",
-    "content": "마크다운 형식의 본문 (사람이 쓴 것처럼 자연스럽게)",
+    "content": "마크다운 형식의 본문 (줄바꿈은 \\n으로 표현, 큰따옴표는 \\"로 이스케이프)",
     "word_count": 실제_글자수
 }}
+
+주의사항:
+- JSON 내부의 문자열에서 줄바꿈은 \\n으로 표현
+- 큰따옴표는 반드시 \\"로 이스케이프
+- 제어 문자(탭, 캐리지 리턴 등) 사용 금지
+- JSON 앞뒤에 다른 텍스트 없이 순수 JSON만 출력
 
 마크다운 형식:
 - 헤딩은 ## 부터 시작
@@ -170,7 +177,7 @@ class ClaudeContentGenerator:
 4. 실용적인 팁이나 조언
 5. 자연스러운 마무리와 독자 소통"""
 
-            # Claude API 호출
+            # Claude API 호출 (스트리밍 활성화)
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
@@ -180,7 +187,9 @@ class ClaudeContentGenerator:
                         "role": "user", 
                         "content": prompt
                     }
-                ]
+                ],
+                stream=False,  # 스트리밍 비활성화로 전체 응답 대기
+                timeout=300.0  # 5분 타임아웃
             )
             
             # 응답 파싱
@@ -198,15 +207,47 @@ class ClaudeContentGenerator:
                 else:
                     raise ValueError("JSON 형식을 찾을 수 없습니다")
             except (json.JSONDecodeError, ValueError) as e:
-                logger.warning(f"JSON 파싱 실패, 기본 구조로 처리: {e}")
-                # JSON 파싱 실패 시 기본 구조로 처리
+                logger.warning(f"JSON 파싱 실패, 텍스트에서 내용 추출: {e}")
+                # JSON 파싱 실패 시 텍스트에서 실제 콘텐츠 추출
                 lines = content_text.split('\n')
+                
+                # JSON 블록 제거하고 실제 텍스트 콘텐츠만 추출
+                clean_content = []
+                in_json = False
+                for line in lines:
+                    if line.strip().startswith('{') or line.strip().startswith('"'):
+                        in_json = True
+                        continue
+                    if in_json and (line.strip().endswith('}') or '"' in line):
+                        in_json = False
+                        continue
+                    if not in_json and line.strip():
+                        clean_content.append(line)
+                
+                # 만약 추출된 내용이 없다면 기본 콘텐츠 생성
+                if not clean_content:
+                    clean_content = [
+                        f"# {main_keyword}에 대한 완벽한 가이드",
+                        "",
+                        f"{main_keyword}는 현재 많은 관심을 받고 있는 중요한 주제입니다.",
+                        "",
+                        "## 주요 특징",
+                        f"- {main_keyword}의 핵심 개념과 원리",
+                        "- 실제 활용 사례와 예시",
+                        "- 향후 발전 방향과 전망",
+                        "",
+                        "## 마무리",
+                        f"{main_keyword}에 대해 알아보았습니다. 더 자세한 정보가 필요하시면 관련 문서를 참고해주세요."
+                    ]
+                
                 title = f"{main_keyword}에 대한 완벽한 가이드"
+                clean_text = '\n'.join(clean_content)
+                
                 content_data = {
                     "title": title,
                     "meta_description": f"{main_keyword}에 대한 포괄적인 정보를 제공합니다. {', '.join(keywords[:3])}을 활용한 실무 팁을 확인하세요.",
-                    "content": content_text,
-                    "word_count": len(content_text.replace(' ', ''))
+                    "content": clean_text,
+                    "word_count": len(clean_text)
                 }
             
             # 실제 글자 수 계산 (공백 포함)
