@@ -100,16 +100,51 @@ async def health_check():
 # Dashboard endpoints (temporary mock data)
 @app.get("/dashboard/stats")
 async def get_dashboard_stats():
-    """대시보드 통계 정보"""
+    """대시보드 통계 정보 - Supabase 실제 데이터"""
     try:
-        # Get platforms data
+        # 플랫폼 데이터 가져오기
         platforms_result = supabase_client.table('blog_platforms').select("*").execute()
         platforms = platforms_result.data or []
         
-        # 실제 포스트 데이터를 가져와서 계산
+        # 실제 콘텐츠 수 계산
+        contents_result = supabase_client.table('contents').select("id").execute()
+        total_posts = len(contents_result.data) if contents_result.data else 0
+        
+        # 최근 포스트 가져오기
         posts_response = await get_posts()
-        recent_posts = posts_response["posts"][:5]  # 최근 5개만
-        total_posts = len(posts_response["posts"])
+        recent_posts = posts_response["posts"][:5]
+        
+        # 각 플랫폼의 실제 통계 계산
+        for platform in platforms:
+            platform_id = platform.get('id')
+            
+            # 해당 플랫폼의 계정 수
+            accounts_result = supabase_client.table('blog_accounts').select("id").eq('platform_id', platform_id).execute()
+            account_count = len(accounts_result.data) if accounts_result.data else 0
+            
+            # 해당 플랫폼의 발행 통계
+            if accounts_result.data:
+                account_ids = [acc['id'] for acc in accounts_result.data]
+                publications_result = supabase_client.table('publications').select(
+                    "views, likes, comments"
+                ).in_('blog_account_id', account_ids).execute()
+                
+                if publications_result.data:
+                    total_views = sum(pub.get('views', 0) for pub in publications_result.data)
+                    total_likes = sum(pub.get('likes', 0) for pub in publications_result.data)
+                    total_comments = sum(pub.get('comments', 0) for pub in publications_result.data)
+                    post_count = len(publications_result.data)
+                else:
+                    total_views = total_likes = total_comments = post_count = 0
+            else:
+                total_views = total_likes = total_comments = post_count = account_count = 0
+            
+            # 플랫폼 데이터 업데이트
+            platform['account_count'] = account_count
+            platform['post_count'] = post_count
+            platform['total_views'] = total_views
+            platform['total_likes'] = total_likes
+            platform['total_comments'] = total_comments
         
         return {
             "total_posts": total_posts,
@@ -117,6 +152,7 @@ async def get_dashboard_stats():
             "recent_posts": recent_posts
         }
     except Exception as e:
+        logger.error(f"Dashboard stats error: {e}")
         return {
             "total_posts": 0,
             "platforms": [],
@@ -126,63 +162,52 @@ async def get_dashboard_stats():
 
 @app.get("/dashboard/publishing-activity")
 async def get_publishing_activity():
-    """발행 활동 데이터 (GitHub 스타일 캘린더용) - Supabase 기반"""
+    """발행 활동 데이터 (GitHub 스타일 캘린더용) - Supabase 실제 데이터"""
     from datetime import datetime, timedelta
-    import random
+    from collections import defaultdict
     
     try:
-        # Supabase에서 blog_platforms 데이터 기반으로 활동 시뮬레이션
-        platforms_result = supabase_client.table('blog_platforms').select("*").execute()
-        platforms = platforms_result.data or []
+        # Supabase에서 실제 발행된 포스트 데이터 가져오기
+        contents_result = supabase_client.table('contents').select("*").order('created_at', desc=True).execute()
+        contents = contents_result.data or []
         
-        # 플랫폼별 총 포스트 수 합계
-        total_platform_posts = sum(platform.get('post_count', 0) for platform in platforms)
-        
-        # 현재 날짜 기준으로 365일 전부터의 데이터 생성
+        # 365일 기간 설정
         end_date = datetime.now()
         start_date = end_date - timedelta(days=364)
         
+        # 날짜별 포스트 그룹화
+        posts_by_date = defaultdict(list)
+        
+        for content in contents:
+            created_at = content.get('created_at')
+            if created_at:
+                try:
+                    content_date = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                    content_date = content_date.date()
+                    
+                    # 365일 범위 내의 데이터만 포함
+                    if start_date.date() <= content_date <= end_date.date():
+                        posts_by_date[content_date.strftime("%Y-%m-%d")].append(content.get('title', '제목 없음'))
+                except:
+                    continue
+        
+        # 365일 활동 데이터 생성
         activities = []
         total_posts = 0
         active_days = 0
         
-        # 실제 플랫폼 데이터를 기반으로 현실적인 활동 패턴 생성
-        posts_per_day_avg = total_platform_posts / 365 if total_platform_posts > 0 else 0.1
-        
         current_date = start_date
         while current_date <= end_date:
-            # 플랫폼 데이터 기반으로 포스트 수 결정
-            if posts_per_day_avg > 0:
-                # 포아송 분포를 근사한 랜덤 생성
-                base_chance = min(posts_per_day_avg * 3, 0.4)  # 최대 40% 확률
-                count = 0
-                
-                # 주말에는 활동 감소
-                if current_date.weekday() >= 5:
-                    base_chance *= 0.5
-                
-                if random.random() < base_chance:
-                    count = random.choices([1, 2, 3], weights=[0.7, 0.2, 0.1])[0]
-            else:
-                count = 0
+            date_str = current_date.strftime("%Y-%m-%d")
+            posts = posts_by_date.get(date_str, [])
+            count = len(posts)
             
-            posts = []
             if count > 0:
                 active_days += 1
                 total_posts += count
-                # 실제 플랫폼 이름을 기반으로 포스트 제목 생성
-                platform_names = [p.get('name', '블로그') for p in platforms]
-                sample_titles = [
-                    f"{random.choice(platform_names)}에서 공유하는 AI 기술 트렌드",
-                    f"{random.choice(platform_names)} 개발 팁과 노하우",
-                    f"데이터 과학 입문 - {random.choice(platform_names)}",
-                    f"웹 개발 베스트 프랙티스 by {random.choice(platform_names)}",
-                    f"{random.choice(platform_names)}의 최신 기술 분석"
-                ]
-                posts = random.sample(sample_titles, min(count, len(sample_titles)))
             
             activities.append({
-                "date": current_date.strftime("%Y-%m-%d"),
+                "date": date_str,
                 "count": count,
                 "posts": posts
             })
@@ -193,10 +218,6 @@ async def get_publishing_activity():
             "activities": activities,
             "total_posts": total_posts,
             "active_days": active_days,
-            "platforms_data": {
-                "total_platform_posts": total_platform_posts,
-                "connected_platforms": len(platforms)
-            },
             "date_range": {
                 "start": start_date.strftime("%Y-%m-%d"),
                 "end": end_date.strftime("%Y-%m-%d")
@@ -205,15 +226,10 @@ async def get_publishing_activity():
         
     except Exception as e:
         logger.error(f"Publishing activity data error: {e}")
-        # 에러 시 기본 빈 데이터 반환
         return {
             "activities": [],
             "total_posts": 0,
             "active_days": 0,
-            "platforms_data": {
-                "total_platform_posts": 0,
-                "connected_platforms": 0
-            },
             "date_range": {
                 "start": datetime.now().strftime("%Y-%m-%d"),
                 "end": datetime.now().strftime("%Y-%m-%d")
@@ -223,77 +239,68 @@ async def get_publishing_activity():
 
 @app.get("/dashboard/posts")
 async def get_posts():
-    """발행된 포스트 목록 - Supabase 플랫폼 데이터 기반"""
-    from datetime import datetime, timedelta
-    import random
-    
+    """발행된 포스트 목록 - Supabase 실제 데이터"""
     try:
-        # Supabase에서 실제 플랫폼 데이터 가져오기
-        platforms_result = supabase_client.table('blog_platforms').select("*").execute()
-        platforms = platforms_result.data or []
+        # Supabase에서 실제 콘텐츠 데이터 가져오기
+        contents_result = supabase_client.table('contents').select("*").order('created_at', desc=True).execute()
+        contents = contents_result.data or []
         
-        if not platforms:
-            return {"posts": []}
+        # publications 테이블에서 발행 정보 가져오기
+        publications_result = supabase_client.table('publications').select("*").execute()
+        publications = publications_result.data or []
         
-        # 플랫폼 데이터 기반으로 포스트 생성
+        # blog_accounts와 blog_platforms 조인하여 플랫폼 정보 가져오기
+        accounts_result = supabase_client.table('blog_accounts').select(
+            "id, platform_id, account_name, blog_platforms(platform_type, name)"
+        ).execute()
+        accounts = accounts_result.data or []
+        
+        # 포스트 데이터 변환
         posts = []
-        titles = [
-            "AI 기술 트렌드 2024: 생성형 AI의 미래",
-            "React 18의 새로운 기능들과 성능 최적화",
-            "데이터 과학 입문: Python으로 시작하는 분석",
-            "웹 개발 베스트 프랙티스와 보안 가이드",
-            "머신러닝 알고리즘 비교 분석",
-            "블록체인 기술의 실제 활용 사례",
-            "클라우드 네이티브 아키텍처 설계",
-            "DevOps 자동화 도구 비교",
-            "프론트엔드 성능 최적화 전략",
-            "마이크로서비스 패턴과 모범 사례",
-            "GraphQL vs REST API 선택 가이드",
-            "도커와 쿠버네티스 실무 활용",
-            "자바스크립트 ES2024 새로운 기능들",
-            "UI/UX 디자인 트렌드와 사용자 경험",
-            "사이버 보안 위협과 대응 방안"
-        ]
         
-        # 각 플랫폼별로 최근 포스트 생성
-        post_id = 1
-        for platform in platforms:
-            platform_post_count = platform.get('post_count', 0)
-            recent_posts_count = min(platform_post_count, random.randint(3, 8))  # 플랫폼당 3-8개 최근 포스트
+        for content in contents:
+            # 해당 콘텐츠의 발행 정보 찾기
+            content_publications = [p for p in publications if p.get('content_id') == content.get('id')]
             
-            for i in range(recent_posts_count):
-                days_ago = random.randint(0, 30)  # 최근 30일
-                created_date = datetime.now() - timedelta(days=days_ago)
-                
+            if content_publications:
+                for pub in content_publications:
+                    # 계정 정보 찾기
+                    account = next((a for a in accounts if a.get('id') == pub.get('blog_account_id')), None)
+                    
+                    platform_info = account.get('blog_platforms', {}) if account else {}
+                    
+                    post = {
+                        "id": content.get('id'),
+                        "title": content.get('title', '제목 없음'),
+                        "platform": platform_info.get('platform_type', 'unknown'),
+                        "platform_name": platform_info.get('name', account.get('account_name', '알 수 없는 플랫폼') if account else '알 수 없는 플랫폼'),
+                        "status": pub.get('status', 'draft'),
+                        "views": pub.get('views', 0),
+                        "likes": pub.get('likes', 0),
+                        "comments": pub.get('comments', 0),
+                        "created_at": content.get('created_at'),
+                        "published_at": pub.get('published_at'),
+                        "url": pub.get('published_url', '')
+                    }
+                    posts.append(post)
+            else:
+                # 발행되지 않은 콘텐츠도 포함
                 post = {
-                    "id": f"post_{post_id}",
-                    "title": random.choice(titles),
-                    "platform": platform.get('platform_type', 'unknown'),
-                    "platform_name": platform.get('name', '알 수 없는 플랫폼'),
-                    "platform_url": platform.get('url', ''),
-                    "status": "published",
-                    "views": random.randint(
-                        max(1, platform.get('total_views', 100) // 10),
-                        platform.get('total_views', 100)
-                    ),
-                    "likes": random.randint(
-                        max(1, platform.get('total_likes', 10) // 5),
-                        platform.get('total_likes', 10)
-                    ),
-                    "comments": random.randint(0, 15),
-                    "created_at": created_date.isoformat(),
-                    "published_at": created_date.isoformat(),
-                    "url": f"{platform.get('url', '')}/post-{post_id}"
+                    "id": content.get('id'),
+                    "title": content.get('title', '제목 없음'),
+                    "platform": 'draft',
+                    "platform_name": '임시저장',
+                    "status": 'draft',
+                    "views": 0,
+                    "likes": 0,
+                    "comments": 0,
+                    "created_at": content.get('created_at'),
+                    "published_at": None,
+                    "url": ''
                 }
                 posts.append(post)
-                post_id += 1
         
-        # 날짜순으로 정렬 (최신순)
-        posts.sort(key=lambda x: x['created_at'], reverse=True)
-        
-        return {
-            "posts": posts
-        }
+        return {"posts": posts}
         
     except Exception as e:
         logger.error(f"Posts data error: {e}")
@@ -456,6 +463,36 @@ async def test_publish(request: dict):
                 "keyword_based": []
             }
         
+        # Supabase에 콘텐츠 저장
+        try:
+            content_data = {
+                "title": claude_content["title"],
+                "content": claude_content["content"],
+                "meta_description": claude_content["meta_description"],
+                "keywords": keywords,
+                "content_type": content_type,
+                "word_count": claude_content["word_count"],
+                "tone": tone,
+                "ai_model_used": settings.claude_model,
+                "featured_image_url": featured_image.get("url") if featured_image else None,
+                "status": "generated",
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            }
+            
+            # contents 테이블에 저장
+            insert_result = supabase_client.table('contents').insert(content_data).execute()
+            
+            if insert_result.data:
+                saved_content = insert_result.data[0]
+                logger.info(f"콘텐츠가 Supabase에 저장됨", content_id=saved_content.get('id'))
+            else:
+                logger.warning("콘텐츠 저장 결과가 비어있음")
+                
+        except Exception as save_error:
+            logger.error(f"콘텐츠 Supabase 저장 실패: {save_error}")
+            # 저장 실패해도 생성된 콘텐츠는 반환
+        
         # 응답 데이터
         content_response = {
             "title": claude_content["title"],
@@ -469,7 +506,7 @@ async def test_publish(request: dict):
         
         return {
             "success": True,
-            "message": "콘텐츠가 성공적으로 생성되었습니다",
+            "message": "콘텐츠가 성공적으로 생성되고 저장되었습니다",
             "content": content_response,
             "generation_info": {
                 "keywords_used": keywords,
