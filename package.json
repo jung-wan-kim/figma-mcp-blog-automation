@@ -37,7 +37,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.15.30",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
     "autoprefixer": "^10.4.0",
